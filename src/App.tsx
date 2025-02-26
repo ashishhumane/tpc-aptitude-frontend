@@ -22,6 +22,7 @@ import Settings from "@/Pages/Admin/Setting";
 // Authentication Pages
 import Auth from "@/Pages/Auth";
 import Error from "./Pages/Error";
+import { Toaster } from "@/components/ui/sonner"
 
 export default function App() {
   return (
@@ -29,14 +30,14 @@ export default function App() {
       <Router>
         <SidebarProvider>
           <AppSidebar />
-          <main>
+          <main className="w-full">
             <SidebarTrigger />
             <Routes>
               {/* Authentication Routes */}
               <Route path="/auth" element={<Auth />} />
 
               {/* user routes protect them later */}
-              <Route path="/" element={<Dashboard />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/tests" element={<TestPage />} />
               <Route path="/results" element={<ResultPage />} />
               <Route path="/test/:testId" element={<TestInterface />} />
@@ -60,6 +61,7 @@ export default function App() {
               {/* 404 Page */}
               <Route path="*" element={<Error />} />
             </Routes>
+            <Toaster />
           </main>
         </SidebarProvider>
       </Router>
