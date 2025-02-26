@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { ModeToggle } from "@/components/mode-toggle"; // Import ModeToggle component
+import ProtectedRoute from "../ProtectedRoute";
 
 // User Menu Items
 const userItems = [
@@ -80,7 +81,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Admin Pages */}
+        <ProtectedRoute isAdmin={true}>
         <SidebarGroup>
           <SidebarGroupLabel>Admin Panel</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -98,6 +99,9 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        </ProtectedRoute>
+        {/* Admin Pages */}
+        
       </SidebarContent>
       <div className="flex justify-start">
         <ModeToggle />

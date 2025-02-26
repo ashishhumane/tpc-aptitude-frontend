@@ -22,7 +22,8 @@ import Settings from "@/Pages/Admin/Setting";
 // Authentication Pages
 import Auth from "@/Pages/Auth";
 import Error from "./Pages/Error";
-import { Toaster } from "@/components/ui/sonner"
+import { Toaster } from "@/components/ui/sonner";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 export default function App() {
   return (
@@ -36,27 +37,31 @@ export default function App() {
               {/* Authentication Routes */}
               <Route path="/auth" element={<Auth />} />
 
+              <Route element={<ProtectedRoute adminOnly={false} />}>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/tests" element={<TestPage />} />
+                <Route path="/results" element={<ResultPage />} />
+                <Route path="/test/:testId" element={<TestInterface />} />
+                <Route path="/result/:testId" element={<ResultInterface />} />
+                <Route path="/profile" element={<Profile />} />
+              </Route>
               {/* user routes protect them later */}
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/tests" element={<TestPage />} />
-              <Route path="/results" element={<ResultPage />} />
-              <Route path="/test/:testId" element={<TestInterface />} />
-              <Route path="/result/:testId" element={<ResultInterface />} />
-              <Route path="/profile" element={<Profile />} />
 
               {/* Admin RoutesProtect this routes later */}
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/create-test" element={<CreateTest />} />
-              <Route
-                path="/admin/test-management"
-                element={<TestManagement />}
-              />
-              <Route
-                path="/admin/user-management"
-                element={<UserManagement />}
-              />
-              <Route path="/admin/reports" element={<Reports />} />
-              <Route path="/admin/settings" element={<Settings />} />
+              <Route element={<ProtectedRoute adminOnly={true} />}>
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/create-test" element={<CreateTest />} />
+                <Route
+                  path="/admin/test-management"
+                  element={<TestManagement />}
+                />
+                <Route
+                  path="/admin/user-management"
+                  element={<UserManagement />}
+                />
+                <Route path="/admin/reports" element={<Reports />} />
+                <Route path="/admin/settings" element={<Settings />} />
+              </Route>
 
               {/* 404 Page */}
               <Route path="*" element={<Error />} />
