@@ -16,7 +16,6 @@ import AdminDashboard from "@/Pages/Admin/Dashboard";
 import CreateTest from "@/Pages/Admin/CreateTest";
 import TestManagement from "@/Pages/Admin/TestManagement";
 import UserManagement from "@/Pages/Admin/UserManagement";
-import Reports from "@/Pages/Admin/Reports";
 import Settings from "@/Pages/Admin/Setting";
 
 // Authentication Pages
@@ -29,7 +28,6 @@ export default function App() {
       <Router>
         <SidebarProvider>
           <AppSidebar />
-          <main>
             <SidebarTrigger />
             <Routes>
               {/* Authentication Routes */}
@@ -54,13 +52,11 @@ export default function App() {
                 path="/admin/user-management"
                 element={<UserManagement />}
               />
-              <Route path="/admin/reports" element={<Reports />} />
               <Route path="/admin/settings" element={<Settings />} />
 
               {/* 404 Page */}
               <Route path="*" element={<Error />} />
             </Routes>
-          </main>
         </SidebarProvider>
       </Router>
     </ThemeProvider>
