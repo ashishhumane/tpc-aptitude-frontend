@@ -27,23 +27,16 @@ import Reports from "./Pages/Admin/Reports";
 
 export default function App() {
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme" >
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <Router>
         <SidebarProvider>
           <Routes>
-            {/* Authentication Routes (No Sidebar) */}
+            {/* Authentication Route (No Sidebar) */}
             <Route path="/auth" element={<Auth />} />
 
             {/* Protected User Routes (With Sidebar) */}
             <Route element={<ProtectedRoute adminOnly={false} />}>
-              <Route
-                element={
-                  <>
-                    <AppSidebar />
-                    <SidebarTrigger />
-                  </>
-                }
-              >
+              <Route path="/" element={<LayoutWithSidebar />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/tests" element={<TestPage />} />
                 <Route path="/results" element={<ResultPage />} />
@@ -55,20 +48,13 @@ export default function App() {
 
             {/* Protected Admin Routes (With Sidebar) */}
             <Route element={<ProtectedRoute adminOnly={true} />}>
-              <Route
-                element={
-                  <>
-                    <AppSidebar />
-                    <SidebarTrigger />
-                  </>
-                }
-              >
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/admin/create-test" element={<CreateTest />} />
-                <Route path="/admin/test-management" element={<TestManagement />} />
-                <Route path="/admin/user-management" element={<UserManagement />} />
-                <Route path="/admin/reports" element={<Reports />} />
-                <Route path="/admin/settings" element={<Settings />} />
+              <Route path="/admin" element={<LayoutWithSidebar />}>
+                <Route index element={<AdminDashboard />} />
+                <Route path="create-test" element={<CreateTest />} />
+                <Route path="test-management" element={<TestManagement />} />
+                <Route path="user-management" element={<UserManagement />} />
+                <Route path="reports" element={<Reports />} />
+                <Route path="settings" element={<Settings />} />
               </Route>
             </Route>
 
@@ -81,4 +67,17 @@ export default function App() {
     </ThemeProvider>
   );
 }
+
+/* ✅ Extracted Layout with Sidebar */
+import { Outlet } from "react-router-dom";
+function LayoutWithSidebar() {
+  return (
+    <>
+      <AppSidebar />
+      <SidebarTrigger />
+      <Outlet />
+    </>
+  );
+}
+
 
