@@ -54,7 +54,6 @@ const adminItems = [
     icon: ClipboardList,
   },
   { title: "User Management", url: "/admin/user-management", icon: Users },
-  { title: "Reports", url: "/admin/reports", icon: BarChart },
   { title: "Settings", url: "/admin/settings", icon: Settings },
 ];
 
@@ -81,7 +80,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <ProtectedRoute isAdmin={true}>
+        <ProtectedRoute adminOnly={true}>
         <SidebarGroup>
           <SidebarGroupLabel>Admin Panel</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -103,7 +102,7 @@ export function AppSidebar() {
         {/* Admin Pages */}
         
       </SidebarContent>
-      <div className="flex justify-start">
+      <div className="flex justify-center p-2">
         <ModeToggle />
       </div>
 

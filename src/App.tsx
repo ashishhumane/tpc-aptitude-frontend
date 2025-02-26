@@ -16,7 +16,6 @@ import AdminDashboard from "@/Pages/Admin/Dashboard";
 import CreateTest from "@/Pages/Admin/CreateTest";
 import TestManagement from "@/Pages/Admin/TestManagement";
 import UserManagement from "@/Pages/Admin/UserManagement";
-import Reports from "@/Pages/Admin/Reports";
 import Settings from "@/Pages/Admin/Setting";
 
 // Authentication Pages
@@ -24,6 +23,7 @@ import Auth from "@/Pages/Auth";
 import Error from "./Pages/Error";
 import { Toaster } from "@/components/ui/sonner";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Reports from "./Pages/Admin/Reports";
 
 export default function App() {
   return (
@@ -31,43 +31,46 @@ export default function App() {
       <Router>
         <SidebarProvider>
           <AppSidebar />
-          <main className="w-full">
-            <SidebarTrigger />
-            <Routes>
-              {/* Authentication Routes */}
-              <Route path="/auth" element={<Auth />} />
+          <SidebarTrigger />
+          <Routes>
+            {/* Authentication Routes */}
+            <Route path="/auth" element={<Auth />} />
 
-              <Route element={<ProtectedRoute adminOnly={false} />}>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/tests" element={<TestPage />} />
-                <Route path="/results" element={<ResultPage />} />
-                <Route path="/test/:testId" element={<TestInterface />} />
-                <Route path="/result/:testId" element={<ResultInterface />} />
-                <Route path="/profile" element={<Profile />} />
-              </Route>
-              {/* user routes protect them later */}
+            <ProtectedRoute adminOnly={false}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/tests" element={<TestPage />} />
+              <Route path="/results" element={<ResultPage />} />
+              <Route path="/test/:testId" element={<TestInterface />} />
+              <Route path="/result/:testId" element={<ResultInterface />} />
+              <Route path="/profile" element={<Profile />} />
+            </ProtectedRoute>
+            {/* user routes protect them later */}
 
-              {/* Admin RoutesProtect this routes later */}
-              <Route element={<ProtectedRoute adminOnly={true} />}>
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/admin/create-test" element={<CreateTest />} />
-                <Route
-                  path="/admin/test-management"
-                  element={<TestManagement />}
-                />
-                <Route
-                  path="/admin/user-management"
-                  element={<UserManagement />}
-                />
-                <Route path="/admin/reports" element={<Reports />} />
-                <Route path="/admin/settings" element={<Settings />} />
-              </Route>
+            {/* Admin RoutesProtect this routes later */}
+            <ProtectedRoute adminOnly={true}>
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/create-test" element={<CreateTest />} />
+              <Route
+                path="/admin/test-management"
+                element={<TestManagement />}
+              />
+              <Route
+                path="/admin/user-management"
+                element={<UserManagement />}
+              />
+              <Route path="/admin/reports" element={<Reports />} />
+              <Route path="/admin/settings" element={<Settings />} />
+            </ProtectedRoute>
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/create-test" element={<CreateTest />} />
+            <Route path="/admin/test-management" element={<TestManagement />} />
+            <Route path="/admin/user-management" element={<UserManagement />} />
+            <Route path="/admin/settings" element={<Settings />} />
 
-              {/* 404 Page */}
-              <Route path="*" element={<Error />} />
-            </Routes>
-            <Toaster />
-          </main>
+            {/* 404 Page */}
+            <Route path="*" element={<Error />} />
+          </Routes>
+          <Toaster />
         </SidebarProvider>
       </Router>
     </ThemeProvider>

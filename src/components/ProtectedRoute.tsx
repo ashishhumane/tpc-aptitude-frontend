@@ -2,7 +2,7 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {jwtDecode} from "jwt-decode";
 
-const ProtectedRoute = ({ adminOnly, children }:{adminOnly:any, children:any}) => {
+const ProtectedRoute = ({ adminOnly, children }:{adminOnly:boolean, children:any}) => {
   const token = useSelector((state:any) => state.auth.token);
 
   if (!token) {

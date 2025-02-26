@@ -1,9 +1,10 @@
-import React from 'react'
+import DemoCalendar from "@/components/Calender";
+
 
 const Dashboard = () => {
   return (
-    <div>Dashboard</div>
-  )
-}
+    <DemoCalendar/>
+  );
+};
 
-export default Dashboard
+export default Dashboard;
