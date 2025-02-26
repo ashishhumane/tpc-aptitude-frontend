@@ -27,47 +27,52 @@ import Reports from "./Pages/Admin/Reports";
 
 export default function App() {
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme" >
       <Router>
         <SidebarProvider>
-          <AppSidebar />
-          <SidebarTrigger />
           <Routes>
-            {/* Authentication Routes */}
+            {/* Authentication Routes (No Sidebar) */}
             <Route path="/auth" element={<Auth />} />
 
-            <ProtectedRoute adminOnly={false}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/tests" element={<TestPage />} />
-              <Route path="/results" element={<ResultPage />} />
-              <Route path="/test/:testId" element={<TestInterface />} />
-              <Route path="/result/:testId" element={<ResultInterface />} />
-              <Route path="/profile" element={<Profile />} />
-            </ProtectedRoute>
-            {/* user routes protect them later */}
-
-            {/* Admin RoutesProtect this routes later */}
-            <ProtectedRoute adminOnly={true}>
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/create-test" element={<CreateTest />} />
+            {/* Protected User Routes (With Sidebar) */}
+            <Route element={<ProtectedRoute adminOnly={false} />}>
               <Route
-                path="/admin/test-management"
-                element={<TestManagement />}
-              />
-              <Route
-                path="/admin/user-management"
-                element={<UserManagement />}
-              />
-              <Route path="/admin/reports" element={<Reports />} />
-              <Route path="/admin/settings" element={<Settings />} />
-            </ProtectedRoute>
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/create-test" element={<CreateTest />} />
-            <Route path="/admin/test-management" element={<TestManagement />} />
-            <Route path="/admin/user-management" element={<UserManagement />} />
-            <Route path="/admin/settings" element={<Settings />} />
+                element={
+                  <>
+                    <AppSidebar />
+                    <SidebarTrigger />
+                  </>
+                }
+              >
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/tests" element={<TestPage />} />
+                <Route path="/results" element={<ResultPage />} />
+                <Route path="/test/:testId" element={<TestInterface />} />
+                <Route path="/result/:testId" element={<ResultInterface />} />
+                <Route path="/profile" element={<Profile />} />
+              </Route>
+            </Route>
 
-            {/* 404 Page */}
+            {/* Protected Admin Routes (With Sidebar) */}
+            <Route element={<ProtectedRoute adminOnly={true} />}>
+              <Route
+                element={
+                  <>
+                    <AppSidebar />
+                    <SidebarTrigger />
+                  </>
+                }
+              >
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/create-test" element={<CreateTest />} />
+                <Route path="/admin/test-management" element={<TestManagement />} />
+                <Route path="/admin/user-management" element={<UserManagement />} />
+                <Route path="/admin/reports" element={<Reports />} />
+                <Route path="/admin/settings" element={<Settings />} />
+              </Route>
+            </Route>
+
+            {/* 404 Page (No Sidebar) */}
             <Route path="*" element={<Error />} />
           </Routes>
           <Toaster />
@@ -76,3 +81,4 @@ export default function App() {
     </ThemeProvider>
   );
 }
+

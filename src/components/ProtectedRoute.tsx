@@ -2,7 +2,7 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {jwtDecode} from "jwt-decode";
 
-const ProtectedRoute = ({ adminOnly, children }:{adminOnly:boolean, children:any}) => {
+const ProtectedRoute = ({ adminOnly}:{adminOnly:boolean}) => {
   const token = useSelector((state:any) => state.auth.token);
 
   if (!token) {
@@ -18,7 +18,7 @@ const ProtectedRoute = ({ adminOnly, children }:{adminOnly:boolean, children:any
     return <Navigate to="/login" replace />;
   }
 
-  return children ? children : <Outlet />;
+  return <Outlet />;
 };
 
 export default ProtectedRoute;

@@ -56,7 +56,7 @@ const Auth = (): React.ReactNode => {
       };
   
       dispatch(login(userData)); // Store user & token in Redux
-      navigate("/dashbo")
+      navigate("/dashboard")
     } catch (error: any) {
       toast.error("Error", {
         description: error.response?.data?.message || "Login failed",
@@ -101,6 +101,7 @@ const Auth = (): React.ReactNode => {
       };
   
       dispatch(login(userData)); // Store user & token in Redux
+      navigate("/dashboard")
       toast.success("Registration Successful", {
         description: response.data.message,
       });
@@ -112,7 +113,7 @@ const Auth = (): React.ReactNode => {
   };
 
   return (
-    <div className="flex flex-col h-screen justify-center items-center  text-white">
+    <div className="flex flex-col h-screen w-full justify-center items-center  text-white">
         <h1 className="text-xl font-semibold">Authentication</h1>
       <Tabs
         defaultValue="login"

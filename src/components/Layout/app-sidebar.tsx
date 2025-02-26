@@ -24,6 +24,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarFooter,
+  SidebarMenuSubItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
 
 import {
@@ -34,15 +37,25 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { ModeToggle } from "@/components/mode-toggle"; // Import ModeToggle component
-import ProtectedRoute from "../ProtectedRoute";
+
+import AdminOnly from "../AdminOnly";
+import { useDispatch } from "react-redux";
+import { logout } from "../../../store/authSlice.ts";
 
 // User Menu Items
 const userItems = [
   { title: "Dashboard", url: "/", icon: Home },
-  { title: "Tests", url: "/tests", icon: ClipboardList },
+  {
+    title: "Tests",
+    icon: ClipboardList,
+    children: [
+      { title: "Practice Tests", url: "/tests/practice" },
+      { title: "Evaluation Tests", url: "/tests/evaluation" },
+    ],
+  },
   { title: "Results", url: "/results", icon: FileText },
-  { title: "Profile", url: "/profile", icon: User },
 ];
+
 
 // Admin Menu Items
 const adminItems = [
@@ -58,29 +71,47 @@ const adminItems = [
 ];
 
 export function AppSidebar() {
+  const dispatch = useDispatch()
   return (
     <Sidebar>
       <SidebarContent>
         {/* User Pages */}
         <SidebarGroup>
-          <SidebarGroupLabel>User Panel</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {userItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <Link to={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+  <SidebarGroupLabel>User Panel</SidebarGroupLabel>
+  <SidebarGroupContent>
+    <SidebarMenu>
+      {userItems.map((item) => (
+        <SidebarMenuItem key={item.title}>
+          <SidebarMenuButton asChild>
+            <Link to={item.url || "#"} className="flex items-center">
+              <item.icon className="mr-2" />
+              <span>{item.title}</span>
+            </Link>
+          </SidebarMenuButton>
 
-        <ProtectedRoute adminOnly={true}>
+          {/* If the item has sub-items, render SidebarMenuSub */}
+          {item.children && (
+            <SidebarMenuSub>
+              {item.children.map((subItem) => (
+                <SidebarMenuSubItem key={subItem.title}>
+                  <SidebarMenuSubButton asChild>
+                    <Link to={subItem.url}>
+                      <span>{subItem.title}</span>
+                    </Link>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+              ))}
+            </SidebarMenuSub>
+          )}
+        </SidebarMenuItem>
+      ))}
+    </SidebarMenu>
+  </SidebarGroupContent>
+</SidebarGroup>
+
+
+
+        <AdminOnly  >
         <SidebarGroup>
           <SidebarGroupLabel>Admin Panel</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -98,7 +129,7 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        </ProtectedRoute>
+        </AdminOnly>
         {/* Admin Pages */}
         
       </SidebarContent>
@@ -123,22 +154,12 @@ export function AppSidebar() {
                 Profile
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/auth?type=login" className="flex items-center">
-                <LogIn className="mr-2" />
-                Login
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/auth?type=signup" className="flex items-center">
-                <UserPlus className="mr-2" />
-                Signup
-              </Link>
-            </DropdownMenuItem>
+            
             <DropdownMenuItem asChild>
               <Link
-                to="/auth?type=logout"
+                to="/auth"
                 className="flex items-center text-red-500"
+                onClick={()=>dispatch(logout())}
               >
                 <LogOut className="mr-2" />
                 Logout
