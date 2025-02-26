@@ -1,9 +1,15 @@
 import DemoCalendar from "@/components/Calender";
-
+import { CarouselDemo } from "@/components/Carausel";
 
 const Dashboard = () => {
   return (
-    <DemoCalendar/>
+    <div className="flex flex-col w-full gap-6 p-6">
+      <h1 className="text-4xl font-bold text-center ">
+        TPC-PCE Aptitude Portal
+      </h1>
+      <CarouselDemo />
+      <DemoCalendar />
+    </div>
   );
 };
 
