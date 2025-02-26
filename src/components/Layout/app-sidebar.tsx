@@ -44,7 +44,7 @@ import { logout } from "../../../store/authSlice.ts";
 
 // User Menu Items
 const userItems = [
-  { title: "Dashboard", url: "/", icon: Home },
+  { title: "Dashboard", url: "/dashboard", icon: Home },
   {
     title: "Tests",
     icon: ClipboardList,

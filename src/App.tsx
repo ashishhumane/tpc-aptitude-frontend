@@ -24,10 +24,11 @@ import Error from "./Pages/Error";
 import { Toaster } from "@/components/ui/sonner";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Reports from "./Pages/Admin/Reports";
+import EvaluationPage from "./Pages/User/EvaluationPage";
 
 export default function App() {
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme" >
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <Router>
         <SidebarProvider>
           <Routes>
@@ -45,7 +46,8 @@ export default function App() {
                 }
               >
                 <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/tests" element={<TestPage />} />
+                <Route path="/tests/practice" element={<TestPage />} />
+                <Route path="/tests/evaluation" element={<EvaluationPage />} />
                 <Route path="/results" element={<ResultPage />} />
                 <Route path="/test/:testId" element={<TestInterface />} />
                 <Route path="/result/:testId" element={<ResultInterface />} />
@@ -65,8 +67,14 @@ export default function App() {
               >
                 <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/create-test" element={<CreateTest />} />
-                <Route path="/admin/test-management" element={<TestManagement />} />
-                <Route path="/admin/user-management" element={<UserManagement />} />
+                <Route
+                  path="/admin/test-management"
+                  element={<TestManagement />}
+                />
+                <Route
+                  path="/admin/user-management"
+                  element={<UserManagement />}
+                />
                 <Route path="/admin/reports" element={<Reports />} />
                 <Route path="/admin/settings" element={<Settings />} />
               </Route>
@@ -81,4 +89,3 @@ export default function App() {
     </ThemeProvider>
   );
 }
-
