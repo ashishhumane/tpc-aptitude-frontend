@@ -1,0 +1,88 @@
+import { createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
+
+const BASE_URL = "http://localhost:5000/api";
+
+export const createTest = createAsyncThunk(
+  "admin/createTest",
+  async (testData: any, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${BASE_URL}/admin/create-test`, testData);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "An error occurred");
+    }
+  }
+);
+
+export const toggleListed = createAsyncThunk(
+  "admin/toggleListed",
+  async (testId: number, { rejectWithValue }) => {
+    try {
+      const response = await axios.put(`${BASE_URL}/admin/toggle-listed`, { testId });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "An error occurred");
+    }
+  }
+);
+
+export const deleteTest = createAsyncThunk(
+  "admin/deleteTest",
+  async (testId: number, { rejectWithValue }) => {
+    try {
+      const response = await axios.delete(`${BASE_URL}/admin/delete-test/${testId}`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "An error occurred");
+    }
+  }
+);
+
+export const getUnlistedTests = createAsyncThunk(
+  "admin/getUnlistedTests",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`${BASE_URL}/admin/get-unlisted-test`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "An error occurred");
+    }
+  }
+);
+
+export const publishResult = createAsyncThunk(
+  "admin/publishResult",
+  async (resultData: any, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${BASE_URL}/admin/publish-result`, resultData);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "An error occurred");
+    }
+  }
+);
+
+export const getAllUsers = createAsyncThunk(
+  "admin/getAllUsers",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`${BASE_URL}/admin/get-all-users`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "An error occurred");
+    }
+  }
+);
+
+export const deleteUser = createAsyncThunk(
+  "admin/deleteUser",
+  async (userId: number, { rejectWithValue }) => {
+    try {
+      const response = await axios.delete(`${BASE_URL}/admin/delete-user/${userId}`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "An error occurred");
+    }
+  }
+);

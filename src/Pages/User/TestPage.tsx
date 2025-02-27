@@ -1,4 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "../../../store/store"; // Import your store types
+import { getPracticeTests } from "../../../store/Actions/testActions";
+
 import {
   Card,
   CardContent,
@@ -11,60 +15,28 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 
-const testData = [
-  {
-    id: 1,
-    title: "Aptitude Test",
-    description: "Basic aptitude questions.",
-    timeLimit: "30 mins",
-    difficulty: "Easy",
-    totalQuestions: 20,
-  },
-  {
-    id: 2,
-    title: "Logical Reasoning",
-    description: "Test your logical skills.",
-    timeLimit: "40 mins",
-    difficulty: "Medium",
-    totalQuestions: 25,
-  },
-  {
-    id: 3,
-    title: "Verbal Ability",
-    description: "Grammar and comprehension.",
-    timeLimit: "25 mins",
-    difficulty: "Easy",
-    totalQuestions: 15,
-  },
-  {
-    id: 4,
-    title: "Coding Challenge",
-    description: "Solve programming problems.",
-    timeLimit: "60 mins",
-    difficulty: "Hard",
-    totalQuestions: 10,
-  },
-  {
-    id: 5,
-    title: "General Knowledge",
-    description: "Trivia and GK questions.",
-    timeLimit: "20 mins",
-    difficulty: "Medium",
-    totalQuestions: 30,
-  },
-];
-
 const TestPage = () => {
   const [search, setSearch] = useState("");
 
+  const dispatch = useDispatch<AppDispatch>();
+  const { practiceTests, loading, error } = useSelector(
+    (state: RootState) => state.test
+  );
+
+  console.log(practiceTests);
+
+  useEffect(() => {
+    dispatch(getPracticeTests());
+  }, [dispatch]);
+
   // Filter tests based on search input
-  const filteredTests = testData.filter((test) =>
-    test.title.toLowerCase().includes(search.toLowerCase())
+  const filteredTests = practiceTests.filter((test) =>
+    test.name.toLowerCase().includes(search.toLowerCase())
   );
 
   const navigate = useNavigate();
 
-  const handleStartTest = (testId: any) => {
+  const handleStartTest = (testId: number) => {
     navigate(`/test/${testId}`);
   };
 
@@ -84,45 +56,51 @@ const TestPage = () => {
         />
       </div>
 
+      {/* Loading & Error Handling */}
+      {loading && <p className="text-center text-gray-600">Loading tests...</p>}
+      {error && <p className="text-center text-red-500">{error}</p>}
+
       {/* Test Cards Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {filteredTests.map((test) => (
-          <Card
-            key={test.id}
-            className="shadow-lg p-4 hover:scale-105 transition-transform"
-          >
-            <CardHeader>
-              <CardTitle className="text-xl">{test.title}</CardTitle>
-              <CardDescription className="text-gray-600">
-                {test.description}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3">
-              <div className="flex justify-between items-center">
-                <Badge variant="outline" className="text-sm px-3">
-                  {test.difficulty}
-                </Badge>
-                <span className="text-sm text-gray-500">
-                  {test.totalQuestions} Questions
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-500">
-                  ⏳ {test.timeLimit}
-                </span>
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    handleStartTest(test.id);
-                  }}
-                >
-                  Start Test
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {!loading && !error && (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {filteredTests.map((test) => (
+            <Card
+              key={test.id}
+              className="shadow-lg p-4 hover:scale-105 transition-transform"
+            >
+              <CardHeader>
+                <CardTitle className="text-xl">{test.name}</CardTitle>
+                <CardDescription className="text-gray-600">
+                  {test.description}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3">
+                {/* Difficulty & Total Questions */}
+                <div className="flex justify-between items-center">
+                  {/* Created At Timestamp */}
+                  <span className="text-sm text-gray-500">
+                    {test.totalQuestions} Questions
+                  </span>
+                  <div className="text-xs text-gray-400 text-right">
+                    🕒
+                    {new Date(test.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
+
+                {/* Time Limit & Start Button */}
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-500">
+                    ⏳ {test.timeLimit} min
+                  </span>
+                  <Button size="sm" onClick={() => handleStartTest(test.id)}>
+                    Start Test
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
