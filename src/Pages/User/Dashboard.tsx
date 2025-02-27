@@ -2,6 +2,7 @@ import DemoCalendar from "@/components/Calender";
 import { CarouselDemo } from "@/components/Carausel";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
+import Resources from "@/components/Resources";
 
 const topStudents = [
   { rank: 1, name: "John Doe", marks: 98 },
@@ -46,6 +47,7 @@ const Dashboard = () => {
 
       {/* Calendar */}
       <DemoCalendar />
+      <Resources />
     </div>
   );
 };

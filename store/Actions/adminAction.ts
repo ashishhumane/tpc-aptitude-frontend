@@ -1,15 +1,27 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
+import { RootState } from "../store"; // Adjust the path as necessary
 
 const BASE_URL = "http://localhost:5000/api";
 
 export const createTest = createAsyncThunk(
   "admin/createTest",
-  async (testData: any, { rejectWithValue }) => {
+  async (testData: any, { getState, rejectWithValue }) => {
     try {
-      const response = await axios.post(`${BASE_URL}/admin/create-test`, testData);
+      const state = getState() as RootState;
+      const token = state.auth.token; // Get token from Redux state
+
+      const response = await axios.post(
+        `${BASE_URL}/admin/create-test`,
+        testData,
+        {
+          headers: {
+            Authorization: `${token}`, // Add Bearer token
+          },
+        }
+      );
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       return rejectWithValue(error.response?.data || "An error occurred");
     }
   }
@@ -19,10 +31,14 @@ export const toggleListed = createAsyncThunk(
   "admin/toggleListed",
   async (testId: number, { rejectWithValue }) => {
     try {
-      const response = await axios.put(`${BASE_URL}/admin/toggle-listed`, { testId });
+      const response = await axios.put(`${BASE_URL}/admin/toggle-listed`, {
+        testId,
+      });
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || "An error occurred");
+      if (error instanceof AxiosError) {
+        return rejectWithValue(error.response?.data || "An error occurred");
+      }
     }
   }
 );
@@ -31,10 +47,14 @@ export const deleteTest = createAsyncThunk(
   "admin/deleteTest",
   async (testId: number, { rejectWithValue }) => {
     try {
-      const response = await axios.delete(`${BASE_URL}/admin/delete-test/${testId}`);
+      const response = await axios.delete(
+        `${BASE_URL}/admin/delete-test/${testId}`
+      );
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || "An error occurred");
+      if (error instanceof AxiosError) {
+        return rejectWithValue(error.response?.data || "An error occurred");
+      }
     }
   }
 );
@@ -46,7 +66,9 @@ export const getUnlistedTests = createAsyncThunk(
       const response = await axios.get(`${BASE_URL}/admin/get-unlisted-test`);
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || "An error occurred");
+      if (error instanceof AxiosError) {
+        return rejectWithValue(error.response?.data || "An error occurred");
+      }
     }
   }
 );
@@ -55,22 +77,41 @@ export const publishResult = createAsyncThunk(
   "admin/publishResult",
   async (resultData: any, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${BASE_URL}/admin/publish-result`, resultData);
+      const response = await axios.post(
+        `${BASE_URL}/admin/publish-result`,
+        resultData
+      );
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || "An error occurred");
+      if (error instanceof AxiosError) {
+        return rejectWithValue(error.response?.data || "An error occurred");
+      }
     }
   }
 );
 
 export const getAllUsers = createAsyncThunk(
   "admin/getAllUsers",
-  async (_, { rejectWithValue }) => {
+  async (_, { getState, rejectWithValue }) => {
     try {
-      const response = await axios.get(`${BASE_URL}/admin/get-all-users`);
+      const state = getState() as RootState;
+      const token = state.auth.token;
+
+      const response = await axios.post(
+        `${BASE_URL}/admin/get-all-users`,
+        {},
+        {
+          headers: {
+            Authorization: `${token}`, // Include token in headers
+          },
+        }
+      );
+
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || "An error occurred");
+      if (error instanceof AxiosError) {
+        return rejectWithValue(error.response?.data || "An error occurred");
+      }
     }
   }
 );
@@ -79,10 +120,14 @@ export const deleteUser = createAsyncThunk(
   "admin/deleteUser",
   async (userId: number, { rejectWithValue }) => {
     try {
-      const response = await axios.delete(`${BASE_URL}/admin/delete-user/${userId}`);
+      const response = await axios.delete(
+        `${BASE_URL}/admin/delete-user/${userId}`
+      );
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || "An error occurred");
+      if (error instanceof AxiosError) {
+        return rejectWithValue(error.response?.data || "An error occurred");
+      }
     }
   }
 );

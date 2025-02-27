@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "../../../store/store";
+import { getAllUsers } from "../../../store/Actions/adminAction";
 import {
   useReactTable,
   getCoreRowModel,
@@ -16,108 +19,53 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Trash2 } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
-// Define student data type
-type Student = {
+// Define the correct User type based on API response
+type User = {
   id: number;
-  name: string;
-  gender: string;
-  dateOfJoining: string;
-  performance: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  createdAt: string; // Date of account creation
 };
 
-// Sample student data
-const initialStudents: Student[] = [
-  {
-    id: 1,
-    name: "Amit Sharma",
-    gender: "Male",
-    dateOfJoining: "2023-08-15",
-    performance: "Good",
-  },
-  {
-    id: 2,
-    name: "Neha Verma",
-    gender: "Female",
-    dateOfJoining: "2022-05-20",
-    performance: "Excellent",
-  },
-  {
-    id: 3,
-    name: "Rohit Mehta",
-    gender: "Male",
-    dateOfJoining: "2021-12-10",
-    performance: "Average",
-  },
-  {
-    id: 4,
-    name: "Priya Singh",
-    gender: "Female",
-    dateOfJoining: "2024-01-05",
-    performance: "Poor",
-  },
-  {
-    id: 5,
-    name: "Karan Patel",
-    gender: "Male",
-    dateOfJoining: "2020-07-18",
-    performance: "Good",
-  },
-];
-
 const UserManagement = () => {
-  const [students, setStudents] = useState<Student[]>(initialStudents);
+  const dispatch = useDispatch<AppDispatch>();
 
-  // Update Performance
-  const updatePerformance = (id: number, newPerformance: string) => {
-    setStudents((prevStudents) =>
-      prevStudents.map((student) =>
-        student.id === id
-          ? { ...student, performance: newPerformance }
-          : student
-      )
-    );
-  };
+  // Get user data from Redux store
+  const { users, isLoading, error } = useSelector(
+    (state: RootState) => state.admin
+  );
 
-  // Delete Student
-  const deleteStudent = (id: number) => {
-    setStudents((prevStudents) =>
-      prevStudents.filter((student) => student.id !== id)
-    );
+  useEffect(() => {
+    dispatch(getAllUsers());
+  }, [dispatch]);
+
+  // Delete User
+  const deleteUser = (id: number) => {
+    console.log(`Deleting user with ID: ${id}`);
+    // You can add an API call here to delete the user from the backend
   };
 
   // Define table columns
-  const columns: ColumnDef<Student>[] = [
+  const columns: ColumnDef<User>[] = [
     { accessorKey: "id", header: "ID" },
-    { accessorKey: "name", header: "Student Name" },
-    { accessorKey: "gender", header: "Gender" },
-    { accessorKey: "dateOfJoining", header: "Date of Joining" },
     {
-      accessorKey: "performance",
-      header: "Performance",
-      cell: ({ row }) => (
-        <Select
-          onValueChange={(value) => updatePerformance(row.original.id, value)}
-          defaultValue={row.original.performance}
-        >
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder="Select" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Excellent">Excellent</SelectItem>
-            <SelectItem value="Good">Good</SelectItem>
-            <SelectItem value="Average">Average</SelectItem>
-            <SelectItem value="Poor">Poor</SelectItem>
-          </SelectContent>
-        </Select>
-      ),
+      accessorKey: "firstName",
+      header: "First Name",
+    },
+    {
+      accessorKey: "lastName",
+      header: "Last Name",
+    },
+    {
+      accessorKey: "email",
+      header: "Email",
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Joined On",
+      cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString(),
     },
     {
       header: "Action",
@@ -125,7 +73,7 @@ const UserManagement = () => {
         <Button
           variant="destructive"
           size="sm"
-          onClick={() => deleteStudent(row.original.id)}
+          onClick={() => deleteUser(row.original.id)}
         >
           <Trash2 size={16} />
         </Button>
@@ -135,7 +83,7 @@ const UserManagement = () => {
 
   // Create table instance
   const table = useReactTable({
-    data: students,
+    data: users, // Use API-fetched users
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
@@ -143,47 +91,63 @@ const UserManagement = () => {
   return (
     <div className="container mx-auto p-6">
       <h2 className="text-2xl font-semibold mb-4">User Management</h2>
-      <div className="overflow-x-auto">
-        <div className="w-full max-w-6xl mx-auto">
-          <Table className="w-full">
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id} className="px-4 py-2 text-left">
-                      {header.column.columnDef.header as string}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows.length > 0 ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className="px-4 py-2">
-                        {typeof cell.column.columnDef.cell === "function"
-                          ? cell.column.columnDef.cell(cell.getContext())
-                          : cell.renderValue()}
-                      </TableCell>
+
+      {isLoading && <p>Loading users...</p>}
+      {error && (
+        <p className="text-red-500">
+          Error:{" "}
+          {typeof error === "string"
+            ? error
+            : error || "An unknown error occurred"}
+        </p>
+      )}
+
+      {!isLoading && !error && (
+        <div className="overflow-x-auto">
+          <div className="w-full max-w-6xl mx-auto">
+            <Table className="w-full">
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => (
+                      <TableHead
+                        key={header.id}
+                        className="px-4 py-2 text-left"
+                      >
+                        {header.column.columnDef.header as string}
+                      </TableHead>
                     ))}
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="text-center py-4"
-                  >
-                    No students available
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows.length > 0 ? (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow key={row.id}>
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id} className="px-4 py-2">
+                          {typeof cell.column.columnDef.cell === "function"
+                            ? cell.column.columnDef.cell(cell.getContext())
+                            : cell.renderValue()}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="text-center py-4"
+                    >
+                      No users available
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

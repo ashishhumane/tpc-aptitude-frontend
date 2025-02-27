@@ -8,8 +8,32 @@ import {
   getTopStudents,
 } from "../Actions/testActions";
 
+// types.ts
+export interface TestResult {
+  student: {
+    name: string;
+    rollNumber: string;
+    course: string;
+    year: string;
+  };
+  test: {
+    title: string;
+    date: string;
+    totalMarks: number;
+    obtainedMarks: number;
+    status: "Passed" | "Failed";
+  };
+  questions: {
+    id: number;
+    question: string;
+    attemptedAnswer: string;
+    correctAnswer: string;
+    isCorrect: boolean;
+  }[];
+}
 interface TestState {
   questions: any[];
+  testDetails: any | null;
   practiceTests: any[];
   realTests: any[];
   topStudents: any[];
@@ -20,10 +44,11 @@ interface TestState {
 
 const initialState: TestState = {
   questions: [],
+  testDetails: null,
   practiceTests: [],
   realTests: [],
   topStudents: [],
-  result: null,
+  result: null as TestResult | null,
   loading: false,
   error: null,
 };
@@ -41,7 +66,8 @@ const testSlice = createSlice({
       })
       .addCase(getQuestions.fulfilled, (state, action) => {
         state.loading = false;
-        state.questions = action.payload;
+        state.questions = action.payload.questions;
+        state.testDetails = action.payload.testDetails;
       })
       .addCase(getQuestions.rejected, (state, action) => {
         state.loading = false;

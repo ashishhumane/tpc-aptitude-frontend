@@ -26,7 +26,7 @@ export const getQuestions = createAsyncThunk(
   async (testId: number, { rejectWithValue }) => {
     try {
       const response = await axios.get(
-        `${BASE_URL}/api/get-questions/${testId}`
+        `${BASE_URL}/test/get-questions/${testId}`
       );
       return response.data;
     } catch (error) {
@@ -43,7 +43,7 @@ export const evaluateQuickTest = createAsyncThunk(
   async (testData: any, { rejectWithValue }) => {
     try {
       const response = await axios.post(
-        `${BASE_URL}/api/evaluate-quick-test`,
+        `${BASE_URL}/test/evaluate-quick-test`,
         testData
       );
       return response.data;
@@ -77,7 +77,7 @@ export const getRealTests = createAsyncThunk(
   "test/getRealTests",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${BASE_URL}/api/get-real-tests`);
+      const response = await axios.post(`${BASE_URL}/test/get-real-tests`);
       return response.data;
     } catch (error) {
       if (error instanceof AxiosError) {

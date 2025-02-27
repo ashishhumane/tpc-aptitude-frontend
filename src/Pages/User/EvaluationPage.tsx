@@ -1,4 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { AppDispatch, RootState } from "../../../store/store";
+import { getRealTests } from "../../../store/Actions/testActions";
 import {
   Card,
   CardContent,
@@ -9,127 +13,131 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { useNavigate } from "react-router-dom";
-
-const evaluationTests = [
-  {
-    id: 1,
-    title: "Final Aptitude Test",
-    description: "Comprehensive aptitude assessment.",
-    timeLimit: "45 mins",
-    difficulty: "Medium",
-    totalQuestions: 30,
-  },
-  {
-    id: 2,
-    title: "Advanced Logical Reasoning",
-    description: "Evaluate logical and analytical thinking.",
-    timeLimit: "50 mins",
-    difficulty: "Hard",
-    totalQuestions: 35,
-  },
-  {
-    id: 3,
-    title: "Technical Evaluation",
-    description: "Assess programming and problem-solving skills.",
-    timeLimit: "75 mins",
-    difficulty: "Hard",
-    totalQuestions: 20,
-  },
-  {
-    id: 4,
-    title: "General Awareness",
-    description: "Test your knowledge of current affairs.",
-    timeLimit: "30 mins",
-    difficulty: "Medium",
-    totalQuestions: 25,
-  },
-  {
-    id: 5,
-    title: "English Proficiency Test",
-    description: "Evaluate grammar, vocabulary, and comprehension.",
-    timeLimit: "40 mins",
-    difficulty: "Easy",
-    totalQuestions: 20,
-  },
-];
+import { CalendarDays, ArrowRight } from "lucide-react";
 
 const EvaluationPage = () => {
-  const [search, setSearch] = useState("");
+  const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const [search, setSearch] = useState("");
 
-  // Filter tests based on search input
-  const filteredTests = evaluationTests.filter((test) =>
-    test.title.toLowerCase().includes(search.toLowerCase())
+  const { realTests, loading, error } = useSelector(
+    (state: RootState) => state.test
   );
 
-  const handleStartTest = (testId: any) => {
+  useEffect(() => {
+    dispatch(getRealTests());
+  }, [dispatch]);
+
+  const filteredTests = realTests?.filter((test) =>
+    test.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const handleStartTest = (testId: number) => {
     navigate(`/test/${testId}`);
   };
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      {/* Title */}
-      <h1 className="text-3xl font-bold text-center mb-6">
-        🎯 Evaluation Tests
-      </h1>
+      {/* Enhanced Title Section */}
+      <div className="text-center mb-10">
+        <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
+          Evaluation Tests
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400">
+          Assess your skills with timed evaluation exams
+        </p>
+      </div>
 
       {/* Search Input */}
-      <div className="mb-6">
+      <div className="mb-8">
         <Input
           type="text"
-          placeholder="Search evaluation tests..."
+          placeholder="🔍 Search evaluations..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full text-lg p-3"
+          className="w-full p-3 rounded-xl border-2 focus:border-red-500 transition-all"
         />
       </div>
 
-      {/* Test Cards Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {filteredTests.length > 0 ? (
-          filteredTests.map((test) => (
-            <Card
-              key={test.id}
-              className="shadow-lg p-4 hover:scale-105 transition-transform"
-            >
-              <CardHeader>
-                <CardTitle className="text-xl">{test.title}</CardTitle>
-                <CardDescription className="text-gray-600">
-                  {test.description}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-3">
-                <div className="flex justify-between items-center">
-                  <Badge variant="outline" className="text-sm px-3">
-                    {test.difficulty}
-                  </Badge>
-                  <span className="text-sm text-gray-500">
-                    {test.totalQuestions} Questions
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-500">
-                    ⏳ {test.timeLimit}
-                  </span>
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      handleStartTest(test.id);
-                    }}
-                  >
-                    Start Test
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          <p className="text-center text-gray-600">
-            No evaluation tests available.
-          </p>
-        )}
-      </div>
+      {/* Loading/Error Handling */}
+      {loading && <p className="text-center text-gray-600">Loading evaluations...</p>}
+      {error && <p className="text-center text-red-500">{error}</p>}
+
+      {/* Enhanced Test Cards Grid */}
+      {!loading && !error && (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredTests?.length > 0 ? (
+            filteredTests.map((test) => (
+              <Card
+                key={test.id}
+                className="group relative overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-red-50/50 to-orange-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 dark:from-red-900/20 dark:to-orange-900/20" />
+                
+                <CardHeader className="relative">
+                  <div className="flex items-start justify-between gap-2">
+                    <CardTitle className="text-xl font-bold text-gray-800 dark:text-gray-200">
+                      {test.name}
+                    </CardTitle>
+                  </div>
+                  <CardDescription className="text-gray-600 dark:text-gray-400 line-clamp-2">
+                    {test.description}
+                  </CardDescription>
+                </CardHeader>
+
+                <CardContent className="relative space-y-4">
+                  {/* Metadata Grid */}
+                  <div className="grid grid-cols-2 gap-4 text-center">
+                    <div className="space-y-1">
+                      <div className="text-2xl font-bold text-red-600 dark:text-red-400">
+                        {test.totalQuestions}
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Questions
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                        {test.timeLimit}
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Minutes
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="border-t border-gray-200 dark:border-gray-700" />
+
+                  {/* Footer */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2 text-sm">
+                      <CalendarDays className="w-4 h-4 text-gray-500" />
+                      <span className="text-gray-500 dark:text-gray-400">
+                        {new Date(test.createdAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </span>
+                    </div>
+                    <Button 
+                      onClick={() => handleStartTest(test.id)}
+                      className="rounded-lg bg-red-600 hover:bg-red-700 transition-transform hover:-translate-y-1"
+                    >
+                      Start Now <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <p className="text-center text-gray-600 col-span-full py-12">
+              No evaluation tests found matching your search
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 };

@@ -62,7 +62,7 @@ const ResultInterface = () => {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-6 w-full">
       <h1 className="text-3xl font-bold text-center mb-6">📄 Student Result</h1>
 
       {/* Result Container to Capture for PDF */}
@@ -128,7 +128,7 @@ const ResultInterface = () => {
           <CardContent>
             <table className="w-full border-collapse border text-sm">
               <thead>
-                <tr className="bg-gray-200">
+                <tr className="bg-gray-200 dark:bg-zinc-950">
                   <th className="border p-2">#</th>
                   <th className="border p-2">Question</th>
                   <th className="border p-2">Your Answer</th>

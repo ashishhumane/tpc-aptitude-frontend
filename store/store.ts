@@ -13,13 +13,21 @@ const persistConfig = {
 };
 
 const rootReducer = combineReducers({
-  auth: persistReducer(persistConfig, authReducer),
-  admin: adminReducer, // Add admin reducer
-  test: testReducer, // Add test reducer
+  auth: authReducer, // ✅ Keep the original reducer
+  admin: adminReducer,
+  test: testReducer,
 });
 
+const persistedReducer = persistReducer(persistConfig, rootReducer);
+
 const store = configureStore({
-  reducer: rootReducer,
+  reducer: persistedReducer,
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: ["persist/PERSIST"],
+      },
+    }),
 });
 
 const persistor = persistStore(store);

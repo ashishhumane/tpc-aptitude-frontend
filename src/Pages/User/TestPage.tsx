@@ -12,8 +12,8 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
+import { CalendarDays, ArrowRight } from "lucide-react";
 
 const TestPage = () => {
   const [search, setSearch] = useState("");
@@ -23,7 +23,6 @@ const TestPage = () => {
     (state: RootState) => state.test
   );
 
-  console.log(practiceTests);
 
   useEffect(() => {
     dispatch(getPracticeTests());
@@ -43,57 +42,90 @@ const TestPage = () => {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       {/* Title */}
-      <h1 className="text-3xl font-bold text-center mb-6">📚 Practice Tests</h1>
+      <div className="text-center mb-10">
+        <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          Practice Tests
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400">
+          Test your knowledge with our curated collection of practice exams
+        </p>
+      </div>
 
       {/* Search Input */}
-      <div className="mb-6">
+      <div className="mb-8">
         <Input
           type="text"
-          placeholder="Search tests..."
+          placeholder="🔍 Search tests..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full text-lg p-3"
+          className="w-full p-3 rounded-xl border-2 focus:border-blue-500 transition-all"
         />
       </div>
 
       {/* Loading & Error Handling */}
-      {loading && <p className="text-center text-gray-600">Loading tests...</p>}
-      {error && <p className="text-center text-red-500">{error}</p>}
 
-      {/* Test Cards Grid */}
+      {/* Improved Test Cards Grid */}
       {!loading && !error && (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredTests.map((test) => (
             <Card
               key={test.id}
-              className="shadow-lg p-4 hover:scale-105 transition-transform"
+              className="group relative overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800"
             >
-              <CardHeader>
-                <CardTitle className="text-xl">{test.name}</CardTitle>
-                <CardDescription className="text-gray-600">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-purple-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 dark:from-blue-900/20 dark:to-purple-900/20" />
+              
+              <CardHeader className="relative">
+                <div className="flex items-start justify-between gap-2">
+                  <CardTitle className="text-xl font-bold text-gray-800 dark:text-gray-200">
+                    {test.name}
+                  </CardTitle>
+                </div>
+                <CardDescription className="text-gray-600 dark:text-gray-400 line-clamp-2">
                   {test.description}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="flex flex-col gap-3">
-                {/* Difficulty & Total Questions */}
-                <div className="flex justify-between items-center">
-                  {/* Created At Timestamp */}
-                  <span className="text-sm text-gray-500">
-                    {test.totalQuestions} Questions
-                  </span>
-                  <div className="text-xs text-gray-400 text-right">
-                    🕒
-                    {new Date(test.createdAt).toLocaleDateString()}
+
+              <CardContent className="relative space-y-4">
+                {/* Metadata Grid */}
+                <div className="grid grid-cols-2 gap-4 text-center">
+                  <div className="space-y-1">
+                    <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                      {test.totalQuestions}
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Questions
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                      {test.timeLimit}
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Minutes
+                    </p>
                   </div>
                 </div>
 
-                {/* Time Limit & Start Button */}
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-500">
-                    ⏳ {test.timeLimit} min
-                  </span>
-                  <Button size="sm" onClick={() => handleStartTest(test.id)}>
-                    Start Test
+                {/* Divider */}
+                <div className="border-t border-gray-200 dark:border-gray-700" />
+
+                {/* Footer */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2 text-sm">
+                    <CalendarDays className="w-4 h-4 text-gray-500" />
+                    <span className="text-gray-500 dark:text-gray-400">
+                      {new Date(test.createdAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                    </span>
+                  </div>
+                  <Button 
+                    onClick={() => handleStartTest(test.id)}
+                    className="rounded-lg bg-blue-600 hover:bg-blue-700 transition-transform hover:-translate-y-1"
+                  >
+                    Start Now <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </div>
               </CardContent>
