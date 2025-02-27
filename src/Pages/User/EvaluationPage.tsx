@@ -70,7 +70,9 @@ const EvaluationPage = () => {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       {/* Title */}
-      <h1 className="text-3xl font-bold text-center mb-6">🎯 Evaluation Tests</h1>
+      <h1 className="text-3xl font-bold text-center mb-6">
+        🎯 Evaluation Tests
+      </h1>
 
       {/* Search Input */}
       <div className="mb-6">
@@ -123,7 +125,9 @@ const EvaluationPage = () => {
             </Card>
           ))
         ) : (
-          <p className="text-center text-gray-600">No evaluation tests available.</p>
+          <p className="text-center text-gray-600">
+            No evaluation tests available.
+          </p>
         )}
       </div>
     </div>
