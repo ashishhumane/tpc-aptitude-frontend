@@ -7,6 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useSelector } from "react-redux";
+import axios from "axios";
+import { toast } from "sonner";
 
 type Option = {
   text: string;
@@ -53,9 +56,27 @@ export default function CreateTestForm() {
     control,
     name: "questions",
   });
-
-  const onSubmit = (data: TestForm) => {
-    console.log("Test Data:", data);
+  const token = useSelector((state: any) => state.auth.token);
+  const onSubmit = async (data: TestForm) => {
+    try {
+      console.log("Test Data:", data);
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/api/admin/create-test`,
+        data, // This is the request body
+        {
+          headers: {
+            Authorization: token, // Headers should be inside this object
+          },
+        }
+      );
+      if (response.status == 201) {
+        return toast.success("Event Created Successfully");
+      } else {
+        return toast.error("Test Creation Failed");
+      }
+    } catch (error: any) {
+      return toast.error("Something Went Wrong", error?.message);
+    }
   };
 
   return (
@@ -196,12 +217,17 @@ export default function CreateTestForm() {
                           render={({ field }) => (
                             <Checkbox
                               checked={field.value}
-                              onCheckedChange={(checked) =>
-                                setValue(
-                                  `questions.${qIndex}.options.${oIndex}.isCorrect`,
-                                  checked as boolean
-                                )
-                              }
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  // Uncheck other options for this question
+                                  question.options.forEach((_, index) => {
+                                    setValue(
+                                      `questions.${qIndex}.options.${index}.isCorrect`,
+                                      index === oIndex
+                                    );
+                                  });
+                                }
+                              }}
                             />
                           )}
                         />
