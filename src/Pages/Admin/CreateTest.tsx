@@ -81,7 +81,7 @@ export default function CreateTestForm() {
   };
 
   return (
-    <Card className="w-full max-w-6xl mx-4 p-8">
+    <Card className="w-full mx-4 p-8">
       <CardHeader>
         <CardTitle>Create a New Test</CardTitle>
       </CardHeader>

@@ -1,7 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../store/store";
-import { getQuestions } from "../../../store/Actions/testActions";
+import { ThunkDispatch } from "@reduxjs/toolkit";
+import { store } from "../../../store/store";
+import { AnyAction } from "redux";
+import {
+  getQuestions,
+  fetchTestStatus,
+  submitTest,
+} from "../../../store/Actions/testActions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,24 +22,155 @@ import {
   Flag,
 } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
+import { decrementTime } from "../../../store/Slices/testSlices"; // Import decrementTime action
 
 const TestInterface = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { questions, testDetails, loading, error } = useSelector(
-    (state: RootState) => state.test
-  );
+  const {
+    questions,
+    testDetails,
+    loading,
+    error,
+    remainingTime,
+    isTestSubmitted,
+  } = useSelector((state: RootState) => state.test);
+  const persistedData = localStorage.getItem("persist:root");
+
+  const studentId = persistedData
+    ? JSON.parse(JSON.parse(persistedData).auth).user.userId
+    : null;
+
+  console.log("Student ID:", studentId);
+
   const { testId } = useParams();
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [calculatorOpen, setCalculatorOpen] = useState(false);
-  const [timeLeft, setTimeLeft] = useState<number>(0);
-  const [isSubmitted, setIsSubmitted] = useState(false);
   const [markedQuestions, setMarkedQuestions] = useState<Set<number>>(
     new Set()
   );
 
+  useEffect(() => {
+    const initializeTest = async () => {
+      if (testId && studentId) {
+        try {
+          const serverState = await dispatch(
+            fetchTestStatus({ studentId, testId: Number(testId) })
+          ).unwrap();
+
+          // Use server time if available, otherwise calculate from duration
+          const initialTime =
+            serverState.remainingTime || testDetails?.time_duration * 60;
+
+          // Ensure time doesn't go over test duration
+          const safeTime = Math.min(
+            initialTime,
+            testDetails?.time_duration * 60
+          );
+
+          dispatch({ type: "test/setInitialTime", payload: safeTime });
+        } catch (error) {
+          console.error("Initialization failed:", error);
+        }
+      }
+    };
+    initializeTest();
+  }, [dispatch, testId, studentId, testDetails]);
+
+  useEffect(() => {
+    console.log("remaintime", remainingTime);
+  }, [remainingTime]);
+
+  // Update the periodic sync useEffect
+  useEffect(() => {
+    if (!studentId || !testId || isTestSubmitted) return;
+
+    // Start local timer
+    const timerId = setInterval(() => {
+      dispatch(decrementTime());
+    }, 1000);
+
+    // Sync with server every 30 seconds
+    const syncInterval = setInterval(async () => {
+      try {
+        const currentTime = store.getState().test.remainingTime;
+
+        // Send current remaining time to server
+        await dispatch(
+          fetchTestStatus({
+            studentId,
+            testId: Number(testId),
+            remainingTime: currentTime ?? undefined,
+          })
+        ).unwrap();
+
+        console.log(`Synced ${currentTime} with server`);
+      } catch (error) {
+        console.error("Sync failed:", error);
+      }
+    }, 30000); // 30 seconds
+
+    return () => {
+      clearInterval(timerId);
+      clearInterval(syncInterval);
+    };
+  }, [studentId, testId, isTestSubmitted, dispatch]);
+
+  useEffect(() => {
+    if (remainingTime !== null && remainingTime > 0) {
+      const expectedTime = testDetails?.time_duration * 60;
+      if (remainingTime >= expectedTime) {
+        console.log("Resetting timer from server value");
+        dispatch({ type: "test/setInitialTime", payload: remainingTime });
+      }
+    }
+  }, [remainingTime, testDetails?.time_duration, dispatch]);
+
+  // Timer management
+  useEffect(() => {
+    if (isTestSubmitted || !remainingTime || remainingTime <= 0) return;
+
+    const timerId = setInterval(() => {
+      dispatch(decrementTime());
+    }, 1000);
+
+    return () => clearInterval(timerId);
+  }, [remainingTime, isTestSubmitted, dispatch]);
+
+  // Handle test submission
+  const handleSubmit = useCallback(async () => {
+    if (isTestSubmitted) return;
+
+    try {
+      await dispatch(
+        submitTest({
+          testId: Number(testId),
+          answers,
+        })
+      );
+      navigate(`/result/${testId}`);
+    } catch (err) {
+      console.error("Submission failed:", err);
+    }
+  }, [isTestSubmitted, dispatch, testId, answers, navigate]);
+
+  // Auto-submit when time reaches 0
+  useEffect(() => {
+    if (remainingTime === 0 && !isTestSubmitted) {
+      handleSubmit();
+    }
+  }, [remainingTime, isTestSubmitted, handleSubmit]);
+
+  // Redirect if test submitted
+  useEffect(() => {
+    if (isTestSubmitted) {
+      navigate(`/result/${testId}`);
+    }
+  }, [isTestSubmitted, navigate, testId]);
+
+  // Helper functions
   const toggleMarkForReview = useCallback(() => {
     setMarkedQuestions((prev) => {
       const newSet = new Set(prev);
@@ -45,46 +183,13 @@ const TestInterface = () => {
     });
   }, [currentQuestionIndex]);
 
-  useEffect(() => {
-    if (testDetails?.time_duration) {
-      setTimeLeft(testDetails.time_duration * 60);
-    }
-  }, [testDetails]);
-
-  useEffect(() => {
-    if (timeLeft <= 0 || isSubmitted) return;
-
-    const timerId = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          handleSubmit();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timerId);
-  }, [timeLeft, isSubmitted]);
-
   const formatTime = useCallback((seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   }, []);
 
-  useEffect(() => {
-    if (testId) {
-      dispatch(getQuestions(Number(testId)));
-    }
-  }, [dispatch, testId]);
-
-  const handleSubmit = useCallback(() => {
-    if (isSubmitted) return;
-    setIsSubmitted(true);
-    navigate(`/result/${testId}`, { state: { answers } });
-  }, [isSubmitted, navigate]);
-
+  // Loading states
   if (loading) return <p>Loading questions...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
   if (!questions.length) return <p>No questions available.</p>;
@@ -120,7 +225,7 @@ const TestInterface = () => {
             className="flex items-center gap-2 animate-pulse"
           >
             <Clock className="w-4 h-4" />
-            {formatTime(timeLeft)}
+            {formatTime(remainingTime ?? 0)}
           </Badge>
           <Button
             size="sm"
@@ -140,7 +245,7 @@ const TestInterface = () => {
             variant={currentQuestionIndex === index ? "default" : "outline"}
             size="sm"
             className={`h-8 w-8 p-0 rounded-full transition-all relative ${
-              answers[index] !== undefined
+              answers[index]
                 ? "bg-green-100 hover:bg-green-200 dark:bg-green-900 dark:hover:bg-green-800"
                 : ""
             }`}
@@ -160,7 +265,6 @@ const TestInterface = () => {
 
       {/* Question & Options Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Question Section */}
         <Card className="h-full min-h-[400px] transition-all duration-300">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -182,7 +286,6 @@ const TestInterface = () => {
           </CardContent>
         </Card>
 
-        {/* Options Section */}
         <Card className="h-full min-h-[400px] transition-all duration-300">
           <CardHeader>
             <CardTitle>Select your answer</CardTitle>
@@ -196,12 +299,12 @@ const TestInterface = () => {
                     ? "default"
                     : "outline"
                 }
-                onClick={() => {
+                onClick={() =>
                   setAnswers((prev) => ({
                     ...prev,
                     [currentQuestionIndex]: option.option_id,
-                  }));
-                }}
+                  }))
+                }
                 className="h-24 flex flex-col items-center justify-center relative overflow-hidden group"
               >
                 {answers[currentQuestionIndex] === option.option_id && (
@@ -237,7 +340,6 @@ const TestInterface = () => {
           >
             <ChevronLeft className="mr-2" /> Previous
           </Button>
-
           <Button
             variant={
               markedQuestions.has(currentQuestionIndex)

@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import {
   submitTest,
   getQuestions,
@@ -6,6 +6,7 @@ import {
   getPracticeTests,
   getRealTests,
   getTopStudents,
+  fetchTestStatus,
 } from "../Actions/testActions";
 
 // types.ts
@@ -40,6 +41,8 @@ interface TestState {
   result: any | null;
   loading: boolean;
   error: string | null;
+  remainingTime: number | null; // Track remaining time for tests
+  isTestSubmitted: boolean; // Track if the test is submitted
 }
 
 const initialState: TestState = {
@@ -51,14 +54,41 @@ const initialState: TestState = {
   result: null as TestResult | null,
   loading: false,
   error: null,
+  remainingTime: null, // Track remaining time for tests
+  isTestSubmitted: false, // Track if the test is submitted
 };
 
 const testSlice = createSlice({
   name: "test",
   initialState,
-  reducers: {},
+  reducers: {
+    decrementTime: (state) => {
+      if (state.remainingTime !== null) {
+        state.remainingTime = Math.max(0, state.remainingTime - 1);
+      }
+    },
+    initializeTime: (state, action: PayloadAction<number>) => {
+      state.remainingTime = action.payload;
+    },
+    setInitialTime: (state, action: PayloadAction<number>) => {
+      state.remainingTime = action.payload;
+    },
+  },
   extraReducers: (builder) => {
     builder
+      .addCase(fetchTestStatus.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchTestStatus.fulfilled, (state, action) => {
+        state.loading = false;
+        state.remainingTime = action.payload.remainingTime;
+        state.isTestSubmitted = action.payload.isSubmitted;
+      })
+      .addCase(fetchTestStatus.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
       // Get Questions
       .addCase(getQuestions.pending, (state) => {
         state.loading = true;
@@ -146,4 +176,5 @@ const testSlice = createSlice({
   },
 });
 
+export const { decrementTime,initializeTime,setInitialTime } = testSlice.actions;
 export default testSlice.reducer;

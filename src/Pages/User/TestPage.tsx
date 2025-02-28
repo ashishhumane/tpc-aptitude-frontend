@@ -21,8 +21,11 @@ const TestPage = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { practiceTests, loading, error } = useSelector(
     (state: RootState) => state.test
-  );
-
+  ) as {
+    practiceTests: any[];
+    loading: boolean;
+    error: string | { message: string } | null;
+  };
 
   useEffect(() => {
     dispatch(getPracticeTests());
@@ -63,6 +66,15 @@ const TestPage = () => {
       </div>
 
       {/* Loading & Error Handling */}
+      {loading && (
+        <p className="text-center text-gray-600">Loading practice tests...</p>
+      )}
+      {error && (
+  <p className="text-center text-red-600">
+    {typeof error === 'string' ? error : error?.message}
+  </p>
+)}
+
 
       {/* Improved Test Cards Grid */}
       {!loading && !error && (
@@ -73,7 +85,7 @@ const TestPage = () => {
               className="group relative overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-purple-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 dark:from-blue-900/20 dark:to-purple-900/20" />
-              
+
               <CardHeader className="relative">
                 <div className="flex items-start justify-between gap-2">
                   <CardTitle className="text-xl font-bold text-gray-800 dark:text-gray-200">
@@ -114,14 +126,14 @@ const TestPage = () => {
                   <div className="flex items-center space-x-2 text-sm">
                     <CalendarDays className="w-4 h-4 text-gray-500" />
                     <span className="text-gray-500 dark:text-gray-400">
-                      {new Date(test.createdAt).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
+                      {new Date(test.createdAt).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
                       })}
                     </span>
                   </div>
-                  <Button 
+                  <Button
                     onClick={() => handleStartTest(test.id)}
                     className="rounded-lg bg-blue-600 hover:bg-blue-700 transition-transform hover:-translate-y-1"
                   >

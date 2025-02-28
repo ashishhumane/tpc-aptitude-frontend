@@ -60,9 +60,7 @@ export const getPracticeTests = createAsyncThunk(
   "test/getPracticeTests",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        `${BASE_URL}/test/get-practice-tests`
-      );
+      const response = await axios.post(`${BASE_URL}/test/get-practice-tests`);
       return response.data;
     } catch (error) {
       if (error instanceof AxiosError) {
@@ -94,6 +92,40 @@ export const getTopStudents = createAsyncThunk(
     try {
       const response = await axios.get(`${BASE_URL}/api/get-top-students`);
       return response.data;
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        return rejectWithValue(error.response?.data || "An error occurred");
+      }
+      return rejectWithValue("An unexpected error occurred");
+    }
+  }
+);
+
+// testActions.ts
+export const fetchTestStatus = createAsyncThunk(
+  "test/fetchTestStatus",
+  async (
+    {
+      studentId,
+      testId,
+      remainingTime, // Add optional parameter
+    }: {
+      studentId: number;
+      testId: number;
+      remainingTime?: number;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await axios.post(`${BASE_URL}/test/handle-test`, {
+        studentId,
+        testId,
+        remainingTime, // Send current time to backend
+      });
+      return {
+        remainingTime: response.data.remainingTime,
+        isSubmitted: response.data.isSubmitted,
+      };
     } catch (error) {
       if (error instanceof AxiosError) {
         return rejectWithValue(error.response?.data || "An error occurred");

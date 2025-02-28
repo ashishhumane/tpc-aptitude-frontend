@@ -9,7 +9,7 @@ import testReducer from "./Slices/testSlices"; // Import test reducer
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["auth"], // Persist only auth state
+  whitelist: ["auth", "test"], // Persist only auth state
 };
 
 const rootReducer = combineReducers({
@@ -25,7 +25,11 @@ const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: ["persist/PERSIST"],
+        ignoredActions: [
+          "persist/PERSIST",
+          "test/setTimerId", // If you have timer ID in state
+          "test/setInitialTime",
+        ],
       },
     }),
 });

@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { CalendarDays, ArrowRight } from "lucide-react";
 
 const EvaluationPage = () => {
@@ -22,7 +21,11 @@ const EvaluationPage = () => {
 
   const { realTests, loading, error } = useSelector(
     (state: RootState) => state.test
-  );
+  ) as {
+    realTests: any[];
+    loading: boolean;
+    error: string | { message: string } | null;
+  }
 
   useEffect(() => {
     dispatch(getRealTests());
@@ -60,8 +63,12 @@ const EvaluationPage = () => {
       </div>
 
       {/* Loading/Error Handling */}
-      {loading && <p className="text-center text-gray-600">Loading evaluations...</p>}
-      {error && <p className="text-center text-red-500">{error}</p>}
+      {loading && (
+        <p className="text-center text-gray-600">Loading evaluations...</p>
+      )}
+
+
+      {error && <p className="text-center text-red-600">{ typeof error=== 'string' ? error : error?.message}</p>}
 
       {/* Enhanced Test Cards Grid */}
       {!loading && !error && (
@@ -73,7 +80,7 @@ const EvaluationPage = () => {
                 className="group relative overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-red-50/50 to-orange-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 dark:from-red-900/20 dark:to-orange-900/20" />
-                
+
                 <CardHeader className="relative">
                   <div className="flex items-start justify-between gap-2">
                     <CardTitle className="text-xl font-bold text-gray-800 dark:text-gray-200">
@@ -114,14 +121,14 @@ const EvaluationPage = () => {
                     <div className="flex items-center space-x-2 text-sm">
                       <CalendarDays className="w-4 h-4 text-gray-500" />
                       <span className="text-gray-500 dark:text-gray-400">
-                        {new Date(test.createdAt).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
+                        {new Date(test.createdAt).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
                         })}
                       </span>
                     </div>
-                    <Button 
+                    <Button
                       onClick={() => handleStartTest(test.id)}
                       className="rounded-lg bg-red-600 hover:bg-red-700 transition-transform hover:-translate-y-1"
                     >
