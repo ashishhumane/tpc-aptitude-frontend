@@ -1,50 +1,85 @@
-import { useRef } from "react";
+import { useRef, useEffect, useMemo } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useParams } from "react-router-dom";
 import html2canvas from "html2canvas";
+import { AppDispatch, RootState } from "../../../store/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
-const resultData = {
-  student: {
-    name: "John Doe",
-    rollNumber: "PCE2024-101",
-    course: "B.Tech CSE",
-    year: "Final Year",
-  },
-  test: {
-    title: "Aptitude Test",
-    date: "25th Feb 2025",
-    totalMarks: 20,
-    obtainedMarks: 18,
-    status: "Passed",
-  },
-  questions: [
-    {
-      id: 1,
-      question: "What is 2 + 2?",
-      attemptedAnswer: "4",
-      correctAnswer: "4",
-      isCorrect: true,
-    },
-    {
-      id: 2,
-      question: "What is the capital of France?",
-      attemptedAnswer: "Berlin",
-      correctAnswer: "Paris",
-      isCorrect: false,
-    },
-    {
-      id: 3,
-      question: "Solve: 5 x 6",
-      attemptedAnswer: "30",
-      correctAnswer: "30",
-      isCorrect: true,
-    },
-  ],
-};
+import { getTestResult } from "../../../store/Actions/resultAction";
 
 const ResultInterface = () => {
-  const resultRef = useRef(null);
+  const dispatch = useDispatch<AppDispatch>();
+  const resultRef = useRef<HTMLDivElement>(null);
+  const { testId } = useParams();
+  const student_id = useSelector((state: RootState) => state.auth.user?.userId);
+  const user = useSelector((state: RootState) => state.auth.user);
+
+  const { testResult, loading, error } = useSelector(
+    (state: RootState) => state.result
+  ) as {
+    testResult: any;
+    loading: boolean;
+    error: string | { message: string };
+  };
+
+  useEffect(() => {
+    if (testId && student_id) {
+      dispatch(
+        getTestResult({
+          test_id: Number(testId),
+          student_id: Number(student_id),
+        })
+      );
+    }
+  }, [dispatch, testId, student_id]);
+
+  const computedResult = useMemo(() => {
+    if (!testResult || !user) return null;
+
+    const testData = testResult;
+    const resultData = testResult.results[0];
+    const passingScore = testData.totalQuestions * 0.5; // Adjust as per your criteria
+
+    return {
+      student: {
+        name: user.firstName + " " + user.lastName, // Assuming user has firstName and lastName properties
+        rollNumber: "N/A",
+        course: "B-TECH ECS",
+        year: "3rd Year",
+      },
+      test: {
+        title: testData.name,
+        date: new Date(testData.createdAt).toLocaleDateString(),
+        totalMarks: testData.totalQuestions,
+        obtainedMarks: resultData.score,
+        status: resultData.score >= passingScore ? "Passed" : "Failed",
+        timeTaken: 0, // Update if you have duration data
+      },
+      questions: testData.questions.map((q: any) => {
+        const attemptedAnswerId = resultData.responses[q.id];
+        const attemptedOption = q.options.find(
+          (opt: any) => opt.id === attemptedAnswerId
+        );
+        const correctOption = q.options.find((opt: any) => opt.isCorrect);
+
+        return {
+          id: q.id,
+          question: q.text,
+          attemptedAnswer: attemptedOption?.text || "Not answered",
+          correctAnswer: correctOption?.text || "No correct answer",
+          isCorrect: attemptedOption ? attemptedOption.isCorrect : false,
+        };
+      }),
+    };
+  }, [testResult, user]);
+
+  // Memoize studentData to avoid re-creating the object on every render
+  const studentData = useMemo(() => {
+    const persistedData = localStorage.getItem("persist:root");
+    return persistedData ? JSON.parse(JSON.parse(persistedData).auth) : null;
+  }, []);
+  console.log(studentData.user);
 
   const downloadResult = async () => {
     if (resultRef.current) {
@@ -52,75 +87,83 @@ const ResultInterface = () => {
         scale: 2,
         useCORS: true,
       });
-      const image = canvas.toDataURL("image/png");
-
       const link = document.createElement("a");
-      link.href = image;
+      link.href = canvas.toDataURL("image/png");
       link.download = "Student_Result.png";
       link.click();
     }
   };
 
+  if (loading) return <p className="text-center p-4">Loading results...</p>;
+  if (error)
+    return (
+      <p className="text-red-500 text-center p-4">
+        Error: {typeof error === "string" ? error : error.message}
+      </p>
+    );
+  if (!computedResult)
+    return <p className="text-center p-4">No results available</p>;
+
   return (
     <div className="p-6 w-full">
-      <h1 className="text-3xl font-bold text-center mb-6">📄 Student Result</h1>
+      <div className="flex flex-row items-center justify-between text-center">
+        <h1 className="text-3xl font-bold mb-4">📄 Student Result</h1>
+        <Button onClick={downloadResult} className="bg-green-600 hover:bg-green-700 text-white">
+           Download Result
+        </Button>
+      </div>
 
-      {/* Result Container to Capture for PDF */}
-      <div ref={resultRef} className="bg-white dark:bg-black p-6 rounded-lg shadow-lg border">
-        {/* Student Details */}
-        <Card className="mb-4">
+      <div
+        ref={resultRef}
+        className="bg-white dark:bg-black p-6 rounded-lg shadow-lg border"
+      >
+        {/* Student Details Card */}
+        <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-lg">Student Details</CardTitle>
+            <CardTitle>Student Details</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-2 gap-4 text-gray-700">
-            <p>
-              <strong>Name:</strong> {resultData.student.name}
-            </p>
-            <p>
-              <strong>Roll Number:</strong> {resultData.student.rollNumber}
-            </p>
-            <p>
-              <strong>Course:</strong> {resultData.student.course}
-            </p>
-            <p>
-              <strong>Year:</strong> {resultData.student.year}
-            </p>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <div>Name: {computedResult.student.name}</div>
+              <div>Admission Number: {computedResult.student.rollNumber}</div>
+              <div>Course: {computedResult.student.course}</div>
+              <div>Year: {computedResult.student.year}</div>
+            </div>
           </CardContent>
         </Card>
 
-        {/* Test Details */}
-        <Card className="mb-4">
+        {/* Test Details Card */}
+        <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-lg">Test Details</CardTitle>
+            <CardTitle>Test Details</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-2 gap-4 text-gray-700">
-            <p>
-              <strong>Test Name:</strong> {resultData.test.title}
-            </p>
-            <p>
-              <strong>Date:</strong> {resultData.test.date}
-            </p>
-            <p>
-              <strong>Total Marks:</strong> {resultData.test.totalMarks}
-            </p>
-            <p>
-              <strong>Obtained Marks:</strong> {resultData.test.obtainedMarks}
-            </p>
-            <p className="col-span-2">
-              <Badge
-                className={`px-3 py-1 ${
-                  resultData.test.status === "Passed"
-                    ? "bg-green-600 text-white"
-                    : "bg-red-600 text-white"
-                }`}
-              >
-                {resultData.test.status}
-              </Badge>
-            </p>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <div>Test Title: {computedResult.test.title}</div>
+              <div>Date: {computedResult.test.date}</div>
+              <div>Total Marks: {computedResult.test.totalMarks}</div>
+              <div>Obtained Marks: {computedResult.test.obtainedMarks}</div>
+              <div>
+                Status:{" "}
+                <Badge
+                  className={
+                    computedResult.test.status === "Passed"
+                      ? "bg-green-600 text-white hover:bg-white-700"
+                      : "bg-red-500"
+                  }
+                >
+                  {computedResult.test.status}
+                </Badge>
+              </div>
+              <div>
+                Time Taken: {Math.floor(computedResult.test.timeTaken / 60)}m{" "}
+                {computedResult.test.timeTaken % 60}s
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        {/* Questions & Answers */}
+        {/* Question Analysis Table */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Question Analysis</CardTitle>
@@ -137,42 +180,46 @@ const ResultInterface = () => {
                 </tr>
               </thead>
               <tbody>
-                {resultData.questions.map((q, index) => (
-                  <tr key={q.id} className="text-center">
-                    <td className="border p-2">{index + 1}</td>
-                    <td className="border p-2 text-left">{q.question}</td>
-                    <td
-                      className={`border p-2 ${
-                        q.isCorrect ? "text-green-600" : "text-red-600"
-                      }`}
-                    >
-                      {q.attemptedAnswer}
-                    </td>
-                    <td className="border p-2">{q.correctAnswer}</td>
-                    <td className="border p-2">
-                      {q.isCorrect ? (
-                        <Badge className="bg-green-500 text-white">
-                          Correct
-                        </Badge>
-                      ) : (
-                        <Badge className="bg-red-500 text-white">
-                          Incorrect
-                        </Badge>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                {computedResult.questions.map(
+                  (
+                    q: {
+                      id: number;
+                      question: string;
+                      attemptedAnswer: string;
+                      correctAnswer: string;
+                      isCorrect: boolean;
+                    },
+                    index: number
+                  ) => (
+                    <tr key={q.id} className="text-center">
+                      <td className="border p-2">{index + 1}</td>
+                      <td className="border p-2 text-left">{q.question}</td>
+                      <td
+                        className={`border p-2 ${
+                          q.isCorrect ? "text-green-600" : "text-red-600"
+                        }`}
+                      >
+                        {q.attemptedAnswer}
+                      </td>
+                      <td className="border p-2">{q.correctAnswer}</td>
+                      <td className="border p-2">
+                        {q.isCorrect ? (
+                          <Badge className="bg-green-600 hover:bg-green-700 text-white">
+                            Correct
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-red-500 text-white">
+                            Incorrect
+                          </Badge>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                )}
               </tbody>
             </table>
           </CardContent>
         </Card>
-      </div>
-
-      {/* Download Button */}
-      <div className="flex justify-center mt-6">
-        <Button onClick={downloadResult} className="bg-blue-600 text-white">
-          📥 Download Result
-        </Button>
       </div>
     </div>
   );

@@ -16,6 +16,7 @@ import AdminDashboard from "@/Pages/Admin/Dashboard";
 import CreateTest from "@/Pages/Admin/CreateTest";
 import TestManagement from "@/Pages/Admin/TestManagement";
 import UserManagement from "@/Pages/Admin/UserManagement";
+import ResultManage from "@/Pages/Admin/ResultManage";
 import Settings from "@/Pages/Admin/Setting";
 
 // Authentication Pages
@@ -55,6 +56,7 @@ export default function App() {
                 <Route path="create-test" element={<CreateTest />} />
                 <Route path="test-management" element={<TestManagement />} />
                 <Route path="user-management" element={<UserManagement />} />
+                <Route path="result-manage" element={<ResultManage />} />
                 <Route path="reports" element={<Reports />} />
                 <Route path="settings" element={<Settings />} />
               </Route>

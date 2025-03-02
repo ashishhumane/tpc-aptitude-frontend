@@ -1,58 +1,33 @@
-import { useState } from "react";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-
-const resultData = [
-  {
-    id: 1,
-    title: "Aptitude Test",
-    score: "18/20",
-    timeTaken: "25 mins",
-    difficulty: "Easy",
-    status: "Passed",
-  },
-  {
-    id: 2,
-    title: "Logical Reasoning",
-    score: "15/25",
-    timeTaken: "38 mins",
-    difficulty: "Medium",
-    status: "Failed",
-  },
-  {
-    id: 3,
-    title: "Verbal Ability",
-    score: "12/15",
-    timeTaken: "20 mins",
-    difficulty: "Easy",
-    status: "Passed",
-  },
-  {
-    id: 4,
-    title: "Coding Challenge",
-    score: "6/10",
-    timeTaken: "55 mins",
-    difficulty: "Hard",
-    status: "Passed",
-  },
-];
+import { getAvailableResults } from "../../../store/Actions/resultAction";
+import { RootState, AppDispatch } from "../../../store/store";
 
 const ResultPage = () => {
-  const [showAll, setShowAll] = useState(false);
+  const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
-  // Toggle between all results and only passed ones
-  const filteredResults = showAll
-    ? resultData
-    : resultData.filter((result) => result.status === "Passed");
+  // Get student_id (Assuming it's stored in Redux or localStorage)
+  const student_id = Number(
+    useSelector((state: RootState) => state.auth.user?.userId)
+  );
+  console.log("student_id", student_id);
+
+  // Fetch results from Redux store
+  const { availableResults, loading, error } = useSelector(
+    (state: RootState) => state.result
+  ) as {
+    availableResults: any[];
+    loading: boolean;
+    error: string | { message: string } | null;
+  };
+
+  useEffect(() => {
+    dispatch(getAvailableResults(student_id));
+  }, [dispatch, student_id]);
 
   const handleSeeResult = (testId: number) => {
     navigate(`/result/${testId}`);
@@ -60,58 +35,49 @@ const ResultPage = () => {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      <h1 className="text-3xl font-bold text-center mb-6">📊 Test Results</h1>
+      <h1 className="text-3xl font-bold text-center mb-6"> Test Results</h1>
 
-      {/* Toggle Button */}
-      <div className="flex justify-center mb-6">
-        <Button onClick={() => setShowAll(!showAll)}>
-          {showAll ? "Show Passed Only" : "Show All Results"}
-        </Button>
-      </div>
+      {/* Loading and Error Handling */}
+      {loading && <p className="text-center">Loading results...</p>}
+      {error && (
+        <p className="text-center text-red-500">
+          {typeof error === "string" ? error : error?.message}
+        </p>
+      )}
 
-      {/* Result Cards Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {filteredResults.map((result) => (
-          <Card
-            key={result.id}
-            className="shadow-lg p-4 hover:scale-105 transition-transform"
-          >
-            <CardHeader>
-              <CardTitle className="text-xl">{result.title}</CardTitle>
-              <CardDescription className="text-gray-600">
-                Score: {result.score}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3">
-              <div className="flex justify-between items-center">
-                <Badge variant="outline" className="text-sm px-3">
-                  {result.difficulty}
-                </Badge>
-                <span className="text-sm text-gray-500">
-                  ⏳ {result.timeTaken}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span
-                  className={`text-sm font-semibold ${
-                    result.status === "Passed"
-                      ? "text-green-600"
-                      : "text-red-600"
-                  }`}
-                >
-                  {result.status}
-                </span>
-                <Button size="sm" onClick={() => handleSeeResult(result.id)}>
-                  See Result
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      {/* Results Table */}
+      <div className="overflow-x-auto">
+        <Table className="w-full border rounded-lg">
+          <TableHeader>
+            <TableRow className="bg-gray-200 dark:bg-zinc-800">
+              <TableHead className="text-left p-3">Result ID</TableHead>
+              <TableHead className="text-left p-3">Test Name</TableHead>
+              <TableHead className="text-left p-3">Description</TableHead>
+              <TableHead className="text-left p-3">Total Questions</TableHead>
+              <TableHead className="text-left p-3">Time Limit</TableHead>
+              <TableHead className="text-left p-3">Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {availableResults.map((result: any) => (
+              <TableRow key={result.id} className="border-t ">
+                <TableCell className="p-3">{result.id}</TableCell>
+                <TableCell className="p-3">{result.name}</TableCell>
+                <TableCell className="p-3">{result.description}</TableCell>
+                <TableCell className="p-3">{result.totalQuestions}</TableCell>
+                <TableCell className="p-3">{result.timeLimit} min</TableCell>
+                <TableCell className="p-3">
+                  <Button size="sm" onClick={() => handleSeeResult(result.id)}>
+                    See Detailed Result
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );
 };
 
 export default ResultPage;
-  

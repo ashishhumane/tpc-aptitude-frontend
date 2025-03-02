@@ -5,6 +5,7 @@ import {
   deleteTest,
   getUnlistedTests,
   publishResult,
+  unpublishResult,
   getAllUsers,
   deleteUser,
 } from "../Actions/adminAction";
@@ -13,7 +14,7 @@ interface AdminState {
   tests: any[];
   users: any[];
   isLoading: boolean;
-  error: string | null;
+  error: string | { message: string } | null;
 }
 
 const initialState: AdminState = {
@@ -75,8 +76,10 @@ const adminSlice = createSlice({
       })
       .addCase(getUnlistedTests.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.tests = action.payload;
+        console.log("Fetched tests:", action.payload); // Debugging log
+        state.tests = action.payload.unlistedTests || []; // Ensure fallback to empty array if undefined
       })
+
       .addCase(getUnlistedTests.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
@@ -88,8 +91,34 @@ const adminSlice = createSlice({
       })
       .addCase(publishResult.fulfilled, (state, action) => {
         state.isLoading = false;
+        // Optionally update the published test in the tests array
+        const index = state.tests.findIndex(
+          (test) => test.id === action.payload.id
+        );
+        if (index !== -1) {
+          state.tests[index] = action.payload;
+        }
       })
       .addCase(publishResult.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
+      })
+
+      // Unpublish Result
+      .addCase(unpublishResult.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(unpublishResult.fulfilled, (state, action) => {
+        state.isLoading = false;
+        // Optionally update the unpublished test in the tests array
+        const index = state.tests.findIndex(
+          (test) => test.id === action.payload.id
+        );
+        if (index !== -1) {
+          state.tests[index] = action.payload;
+        }
+      })
+      .addCase(unpublishResult.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
       })

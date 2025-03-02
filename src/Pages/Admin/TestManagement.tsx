@@ -1,14 +1,25 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useReactTable, getCoreRowModel, ColumnDef } from "@tanstack/react-table"
-import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Trash2 } from "lucide-react"
-import axios from "axios"
-import { useSelector } from "react-redux"
-import { toast } from "sonner"
+import { useEffect, useState } from "react";
+import {
+  useReactTable,
+  getCoreRowModel,
+  ColumnDef,
+} from "@tanstack/react-table";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Trash2 } from "lucide-react";
+import axios from "axios";
+import { useSelector } from "react-redux";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -17,122 +28,156 @@ import {
   AlertDialogFooter,
   AlertDialogCancel,
   AlertDialogAction,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+} from "@/components/ui/select";
 
 // Define test data type
 type Test = {
-  id: number
-  name: string
-  isListed: boolean
-  isQuickEvaluation: boolean
-}
+  id: number;
+  name: string;
+  isListed: boolean;
+  isQuickEvaluation: boolean;
+};
 
 // Sample test data
-const initialTests: Test[] = [
-  { id: 1, name: "Aptitude Test", isListed: true, isQuickEvaluation: false },
-  { id: 2, name: "Logical Reasoning", isListed: false, isQuickEvaluation: true },
-  { id: 3, name: "Verbal Ability", isListed: true, isQuickEvaluation: true },
-  { id: 4, name: "Technical Test", isListed: false, isQuickEvaluation: false },
-  { id: 5, name: "General Knowledge", isListed: true, isQuickEvaluation: true },
-  { id: 6, name: "Coding Challenge", isListed: false, isQuickEvaluation: false },
-]
+const initialTests: Test[] = [];
 
 const TestManagement = () => {
-  const [tests, setTests] = useState<Test[]>(initialTests)
-  const [deleteId, setDeleteId] = useState<number | null>(null) // Store test ID for deletion
-  const token = useSelector((state: any) => state.auth.token)
+  const [tests, setTests] = useState<Test[]>(initialTests);
+  const [filteredTests, setFilteredTests] = useState<Test[]>(initialTests);
+  const [filterType, setFilterType] = useState<string>("all"); // Filter state
+  const [deleteId, setDeleteId] = useState<number | null>(null); // Store test ID for deletion
+  const token = useSelector((state: any) => state.auth.token);
 
-  
   useEffect(() => {
     async function getTests() {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/admin/get-all-tests`, {
-          headers: {
-            Authorization: token
+        const response = await axios.get(
+          `${import.meta.env.VITE_BASE_URL}/api/admin/get-all-tests`,
+          {
+            headers: {
+              Authorization: token,
+            },
           }
-        })
+        );
         if (response.status == 200) {
-          setTests(response.data.tests)
-          toast.success("Tests loaded.")
+          // Map API data to match Test type
+          const transformedTests = response.data.tests.map((test: any) => ({
+            ...test,
+            isQuickEvaluation: test.quickEvaluation, // Correct property mapping
+          }));
+          setTests(transformedTests);
+          setFilteredTests(transformedTests);
+          toast.success("Tests loaded.");
         } else {
-          toast.error("Failed to fetch tests")
+          toast.error("Failed to fetch tests");
         }
       } catch (error: any) {
-        toast.error("Something went wrong", error)
+        toast.error("Something went wrong");
         console.log(error.message);
       }
     }
-    getTests()
-  }, [])
+    getTests();
+  }, []);
 
-// Delete test function with API call
-const deleteTest = async () => {
-  if (deleteId !== null) {
-    try {
-      const response = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/admin/delete-test/`,{
-        testId:deleteId
-      }, {
-        headers: {
-          Authorization: token,
-        },
-      });
-
-      if (response.status === 200) {
-        setTests((prevTests) => prevTests.filter((test) => test.id !== deleteId));
-        toast.success("Test deleted successfully");
-      } else {
-        toast.error("Failed to delete test");
-      }
-    } catch (error: any) {
-      toast.error("Something went wrong");
-      console.error(error.message);
-    } finally {
-      setDeleteId(null); // Reset delete ID
+  // Filter tests based on the selected type
+  useEffect(() => {
+    if (filterType === "all") {
+      setFilteredTests(tests);
+    } else if (filterType === "practice") {
+      setFilteredTests(tests.filter((test) => !test.isQuickEvaluation));
+    } else if (filterType === "evaluation") {
+      setFilteredTests(tests.filter((test) => test.isQuickEvaluation));
     }
-  }
-};
+  }, [filterType, tests]);
 
-const toggleIsListed = async (id: number, currentValue: boolean) => {
-  const updatedValue = !currentValue;
-  setTests((prevTests) =>
-    prevTests.map((test) =>
-      test.id === id ? { ...test, isListed: updatedValue } : test
-    )
-  );
+  // Delete test function with API call
+  const deleteTest = async () => {
+    if (deleteId !== null) {
+      try {
+        const response = await axios.post(
+          `${import.meta.env.VITE_BASE_URL}/api/admin/delete-test/`,
+          {
+            testId: deleteId,
+          },
+          {
+            headers: {
+              Authorization: token,
+            },
+          }
+        );
 
-  try {
-    const response = await axios.post(
-      `${import.meta.env.VITE_BASE_URL}/api/admin/toggle-listed`,
-      { testId: id, is_listed: updatedValue },
-      { headers: { Authorization: token } }
+        if (response.status === 200) {
+          setTests((prevTests) =>
+            prevTests.filter((test) => test.id !== deleteId)
+          );
+          toast.success("Test deleted successfully");
+        } else {
+          toast.error("Failed to delete test");
+        }
+      } catch (error: any) {
+        toast.error("Something went wrong");
+        console.error(error.message);
+      } finally {
+        setDeleteId(null); // Reset delete ID
+      }
+    }
+  };
+
+  const toggleIsListed = async (id: number, currentValue: boolean) => {
+    const updatedValue = !currentValue;
+    setTests((prevTests) =>
+      prevTests.map((test) =>
+        test.id === id ? { ...test, isListed: updatedValue } : test
+      )
     );
 
-    if (response.status === 200) {
-      toast.success("Test listing updated.");
-    } else {
-      toast.error("Failed to update test listing.");
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/api/admin/toggle-listed`,
+        { testId: id, is_listed: updatedValue },
+        { headers: { Authorization: token } }
+      );
+
+      if (response.status === 200) {
+        toast.success("Test listing updated.");
+      } else {
+        toast.error("Failed to update test listing.");
+      }
+    } catch (error: any) {
+      toast.error("Something went wrong.");
+      console.error(error.message);
     }
-  } catch (error: any) {
-    toast.error("Something went wrong.");
-    console.error(error.message);
-  }
-};
+  };
 
   // Define table columns
   const columns: ColumnDef<Test>[] = [
     { accessorKey: "id", header: "ID" },
     { accessorKey: "name", header: "Test Name" },
     {
+      accessorKey: "isQuickEvaluation",
+      header: "Test Type",
+      cell: ({ row }) =>
+        row.original.isQuickEvaluation ? "Evaluation" : "Practice",
+    },
+    {
       accessorKey: "isListed",
       header: "Listed",
       cell: ({ row }) => (
         <Checkbox
           checked={row.original.isListed}
-          onCheckedChange={() => toggleIsListed(row.original.id, row.original.isListed)}
+          onCheckedChange={() =>
+            toggleIsListed(row.original.id, row.original.isListed)
+          }
         />
       ),
     },
-    
     {
       header: "Action",
       cell: ({ row }) => (
@@ -162,20 +207,38 @@ const toggleIsListed = async (id: number, currentValue: boolean) => {
 
   // Create table instance
   const table = useReactTable({
-    data: tests,
+    data: filteredTests,
     columns,
     getCoreRowModel: getCoreRowModel(),
-  })
+  });
 
   return (
     <div className="container mx-auto p-6">
       <h2 className="text-2xl font-semibold mb-4">Test Management</h2>
+
+      {/* Filter Dropdown */}
+      <div className="mb-4 flex items-center space-x-4">
+        <span className="text-lg font-medium">Filter By:</span>
+        <Select value={filterType} onValueChange={setFilterType}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Select Test Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Tests</SelectItem>
+            <SelectItem value="practice">Practice Tests</SelectItem>
+            <SelectItem value="evaluation">Evaluation Tests</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
-                <TableHead key={header.id}>{header.column.columnDef.header as string}</TableHead>
+                <TableHead key={header.id}>
+                  {header.column.columnDef.header as string}
+                </TableHead>
               ))}
             </TableRow>
           ))}
@@ -203,7 +266,7 @@ const toggleIsListed = async (id: number, currentValue: boolean) => {
         </TableBody>
       </Table>
     </div>
-  )
-}
+  );
+};
 
-export default TestManagement
+export default TestManagement;

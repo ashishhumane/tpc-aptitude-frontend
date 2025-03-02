@@ -83,7 +83,7 @@ const testSlice = createSlice({
       .addCase(fetchTestStatus.fulfilled, (state, action) => {
         state.loading = false;
         state.remainingTime = action.payload.remainingTime;
-        state.isTestSubmitted = action.payload.isSubmitted;
+        state.isTestSubmitted = action.payload.isSubmitted ?? false;
       })
       .addCase(fetchTestStatus.rejected, (state, action) => {
         state.loading = false;

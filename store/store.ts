@@ -5,6 +5,7 @@ import { combineReducers } from "redux";
 import authReducer from "./authSlice";
 import adminReducer from "./Slices/adminSlices"; // Import admin reducer
 import testReducer from "./Slices/testSlices"; // Import test reducer
+import resultReducer from "./Slices/resultSlice"; // Import result reducer
 
 const persistConfig = {
   key: "root",
@@ -13,9 +14,10 @@ const persistConfig = {
 };
 
 const rootReducer = combineReducers({
-  auth: authReducer, // ✅ Keep the original reducer
+  auth: authReducer,
   admin: adminReducer,
   test: testReducer,
+  result: resultReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

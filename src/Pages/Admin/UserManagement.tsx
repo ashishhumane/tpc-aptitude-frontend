@@ -98,7 +98,7 @@ const UserManagement = () => {
           Error:{" "}
           {typeof error === "string"
             ? error
-            : error || "An unknown error occurred"}
+            : error.message || "An unknown error occurred"}
         </p>
       )}
 

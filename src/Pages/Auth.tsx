@@ -24,8 +24,8 @@ const Auth = (): React.ReactNode => {
     rememberMe: false,
   });
   const [step, setStep] = useState(1);
-  const dispatch = useDispatch()
-  const navigate = useNavigate()
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const handleChange = (e: any) => {
     const { name, type, checked, value } = e.target;
     setFormData({ ...formData, [name]: type === "checkbox" ? checked : value });
@@ -42,21 +42,20 @@ const Auth = (): React.ReactNode => {
         }
       );
 
-
       toast.success("Login Successful", { description: response.data.message });
       console.log("userId", response.data);
       const userData = {
         user: {
           userId: response.data.user.id,
           email: response.data.user.email,
-          name: response.data.user.name,
-          
+          firstName: response.data.user.firstName, // Add this
+          lastName: response.data.user.lastName,
         },
         token: response.data.token,
       };
-  
+
       dispatch(login(userData)); // Store user & token in Redux
-      navigate("/dashboard")
+      navigate("/dashboard");
     } catch (error: any) {
       toast.error("Error", {
         description: error.response?.data?.message || "Login failed",
@@ -94,14 +93,14 @@ const Auth = (): React.ReactNode => {
         user: {
           userId: response.data.user.id,
           email: response.data.user.email,
-          name: response.data.user.name,
-          
+          firstName: response.data.user.firstName, // Add this
+          lastName: response.data.user.lastName,
         },
         token: response.data.token,
       };
-  
+
       dispatch(login(userData)); // Store user & token in Redux
-      navigate("/dashboard")
+      navigate("/dashboard");
       toast.success("Registration Successful", {
         description: response.data.message,
       });
@@ -114,7 +113,7 @@ const Auth = (): React.ReactNode => {
 
   return (
     <div className="flex flex-col h-screen w-full justify-center items-center  text-white">
-        <h1 className="text-xl font-semibold">Authentication</h1>
+      <h1 className="text-xl font-semibold">Authentication</h1>
       <Tabs
         defaultValue="login"
         className="w-[400px] dark:bg-zinc-950  p-6 shadow-lg rounded-lg"
@@ -167,8 +166,10 @@ const Auth = (): React.ReactNode => {
               </Button>
             </form>
           ) : (
-            <form onSubmit={handleRegister} className="space-y-4 flex flex-col justify-center items-center">
-                
+            <form
+              onSubmit={handleRegister}
+              className="space-y-4 flex flex-col justify-center items-center"
+            >
               <InputOTP
                 maxLength={6}
                 value={formData.otp}

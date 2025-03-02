@@ -59,33 +59,26 @@ export const deleteTest = createAsyncThunk(
   }
 );
 
+// Action to fetch unlisted tests
 export const getUnlistedTests = createAsyncThunk(
   "admin/getUnlistedTests",
-  async (_, { rejectWithValue }) => {
+  async (_, { getState, rejectWithValue }) => {
     try {
-      const response = await axios.get(`${BASE_URL}/admin/get-unlisted-test`);
+      const state = getState() as RootState;
+      const token = state.auth.token;
+      const response = await axios.get(`${BASE_URL}/admin/get-unlisted-test`, {
+        headers: {
+          Authorization: `${token}`,
+        },
+      });
       return response.data;
     } catch (error) {
       if (error instanceof AxiosError) {
-        return rejectWithValue(error.response?.data || "An error occurred");
+        return rejectWithValue(
+          error.response?.data || "An error occurred while fetching tests"
+        );
       }
-    }
-  }
-);
-
-export const publishResult = createAsyncThunk(
-  "admin/publishResult",
-  async (resultData: any, { rejectWithValue }) => {
-    try {
-      const response = await axios.post(
-        `${BASE_URL}/admin/publish-result`,
-        resultData
-      );
-      return response.data;
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        return rejectWithValue(error.response?.data || "An error occurred");
-      }
+      return rejectWithValue("An unexpected error occurred");
     }
   }
 );
@@ -128,6 +121,64 @@ export const deleteUser = createAsyncThunk(
       if (error instanceof AxiosError) {
         return rejectWithValue(error.response?.data || "An error occurred");
       }
+    }
+  }
+);
+
+// Action to publish a test result
+export const publishResult = createAsyncThunk(
+  "admin/publishResult",
+  async (testId: number, { getState, rejectWithValue }) => {
+    try {
+      const state = getState() as RootState;
+      const token = state.auth.token;
+      const response = await axios.post(
+        `${BASE_URL}/admin/publish-result`,
+        { test_id: testId },
+        {
+          headers: {
+            Authorization: `${token}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        return rejectWithValue(
+          error.response?.data ||
+            "An error occurred while publishing the result"
+        );
+      }
+      return rejectWithValue("An unexpected error occurred");
+    }
+  }
+);
+
+// Action to unpublish a test result
+export const unpublishResult = createAsyncThunk(
+  "admin/unpublishResult",
+  async (testId: number, { getState, rejectWithValue }) => {
+    try {
+      const state = getState() as RootState;
+      const token = state.auth.token;
+      const response = await axios.post(
+        `${BASE_URL}/admin/unpublish-result`,
+        { test_id: testId },
+        {
+          headers: {
+            Authorization: `${token}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        return rejectWithValue(
+          error.response?.data ||
+            "An error occurred while unpublishing the result"
+        );
+      }
+      return rejectWithValue("An unexpected error occurred");
     }
   }
 );

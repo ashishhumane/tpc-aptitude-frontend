@@ -122,7 +122,7 @@ const TestPage = () => {
                 <div className="border-t border-gray-200 dark:border-gray-700" />
 
                 {/* Footer */}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4 justify-between">
                   <div className="flex items-center space-x-2 text-sm">
                     <CalendarDays className="w-4 h-4 text-gray-500" />
                     <span className="text-gray-500 dark:text-gray-400">
@@ -137,7 +137,7 @@ const TestPage = () => {
                     onClick={() => handleStartTest(test.id)}
                     className="rounded-lg bg-blue-600 hover:bg-blue-700 transition-transform hover:-translate-y-1"
                   >
-                    Start Now <ArrowRight className="ml-2 h-4 w-4" />
+                    Start Now <ArrowRight className=" h-4 w-4" />
                   </Button>
                 </div>
               </CardContent>

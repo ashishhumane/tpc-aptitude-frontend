@@ -6,12 +6,10 @@ import {
   Users,
   Settings,
   PlusSquare,
-  BarChart,
   User,
-  LogIn,
   LogOut,
-  UserPlus,
   ChevronDown,
+  NotepadText,
 } from "lucide-react";
 
 import {
@@ -56,7 +54,6 @@ const userItems = [
   { title: "Results", url: "/results", icon: FileText },
 ];
 
-
 // Admin Menu Items
 const adminItems = [
   { title: "Admin Dashboard", url: "/admin", icon: Home },
@@ -67,71 +64,80 @@ const adminItems = [
     icon: ClipboardList,
   },
   { title: "User Management", url: "/admin/user-management", icon: Users },
+  {
+    title: "Result Management",
+    url: "/admin/result-manage",
+    icon: NotepadText,
+  },
   { title: "Settings", url: "/admin/settings", icon: Settings },
 ];
 
+const persistedData = localStorage.getItem("persist:root");
+
+const studentId = persistedData
+  ? JSON.parse(JSON.parse(persistedData).auth).user
+  : null;
+console.log(studentId);
+
 export function AppSidebar() {
-  const dispatch = useDispatch()
+  const dispatch = useDispatch();
   return (
-    <Sidebar>
+    <Sidebar collapsible="icon" className="w-64">
       <SidebarContent>
         {/* User Pages */}
         <SidebarGroup>
-  <SidebarGroupLabel>User Panel</SidebarGroupLabel>
-  <SidebarGroupContent>
-    <SidebarMenu>
-      {userItems.map((item) => (
-        <SidebarMenuItem key={item.title}>
-          <SidebarMenuButton asChild>
-            <Link to={item.url || "#"} className="flex items-center">
-              <item.icon className="mr-2" />
-              <span>{item.title}</span>
-            </Link>
-          </SidebarMenuButton>
-
-          {/* If the item has sub-items, render SidebarMenuSub */}
-          {item.children && (
-            <SidebarMenuSub>
-              {item.children.map((subItem) => (
-                <SidebarMenuSubItem key={subItem.title}>
-                  <SidebarMenuSubButton asChild>
-                    <Link to={subItem.url}>
-                      <span>{subItem.title}</span>
-                    </Link>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-              ))}
-            </SidebarMenuSub>
-          )}
-        </SidebarMenuItem>
-      ))}
-    </SidebarMenu>
-  </SidebarGroupContent>
-</SidebarGroup>
-
-
-
-        <AdminOnly  >
-        <SidebarGroup>
-          <SidebarGroupLabel>Admin Panel</SidebarGroupLabel>
+          <SidebarGroupLabel>User Panel</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {adminItems.map((item) => (
+              {userItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <Link to={item.url}>
-                      <item.icon />
+                    <Link to={item.url || "#"} className="flex items-center">
+                      <item.icon className="mr-2" />
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
+
+                  {/* If the item has sub-items, render SidebarMenuSub */}
+                  {item.children && (
+                    <SidebarMenuSub>
+                      {item.children.map((subItem) => (
+                        <SidebarMenuSubItem key={subItem.title}>
+                          <SidebarMenuSubButton asChild>
+                            <Link to={subItem.url}>
+                              <span>{subItem.title}</span>
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  )}
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        <AdminOnly>
+          <SidebarGroup>
+            <SidebarGroupLabel>Admin Panel</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {adminItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <Link to={item.url}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
         </AdminOnly>
         {/* Admin Pages */}
-        
       </SidebarContent>
       <div className="flex justify-center p-2">
         <ModeToggle />
@@ -143,7 +149,7 @@ export function AppSidebar() {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton className="w-full flex items-center justify-between">
               <User className="mr-2" />
-              Username
+              {studentId.email}
               <ChevronDown className="ml-auto" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
@@ -154,12 +160,12 @@ export function AppSidebar() {
                 Profile
               </Link>
             </DropdownMenuItem>
-            
+
             <DropdownMenuItem asChild>
               <Link
                 to="/auth"
                 className="flex items-center text-red-500"
-                onClick={()=>dispatch(logout())}
+                onClick={() => dispatch(logout())}
               >
                 <LogOut className="mr-2" />
                 Logout

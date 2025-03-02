@@ -1,9 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../store/store";
-import { ThunkDispatch } from "@reduxjs/toolkit";
 import { store } from "../../../store/store";
-import { AnyAction } from "redux";
 import {
   getQuestions,
   fetchTestStatus,
@@ -20,8 +18,11 @@ import {
   Check,
   Clock,
   Flag,
+  AlertCircle
 } from "lucide-react";
+import { Alert } from "@/components/ui/alert"
 import { useParams, useNavigate } from "react-router-dom";
+
 import { decrementTime } from "../../../store/Slices/testSlices"; // Import decrementTime action
 
 const TestInterface = () => {
@@ -41,8 +42,6 @@ const TestInterface = () => {
     ? JSON.parse(JSON.parse(persistedData).auth).user.userId
     : null;
 
-  console.log("Student ID:", studentId);
-
   const { testId } = useParams();
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -52,23 +51,48 @@ const TestInterface = () => {
     new Set()
   );
 
+  // Add this useEffect hook to fetch test content
+  useEffect(() => {
+    const loadTestContent = async () => {
+      if (testId) {
+        try {
+          // Fetch test questions and details
+          await dispatch(getQuestions(Number(testId))).unwrap();
+
+          // Fetch test status (time remaining, submission status)
+          await dispatch(
+            fetchTestStatus({
+              studentId: studentId!,
+              testId: Number(testId),
+              isSubmitted: false,
+            })
+          ).unwrap();
+        } catch (error) {
+          console.error("Failed to load test content:", error);
+        }
+      }
+    };
+
+    loadTestContent();
+  }, [dispatch, testId, studentId]);
+
+  // Modify the initialization useEffect to handle missing testDetails
   useEffect(() => {
     const initializeTest = async () => {
-      if (testId && studentId) {
+      if (testId && studentId && testDetails) {
+        // Add testDetails to condition
         try {
           const serverState = await dispatch(
-            fetchTestStatus({ studentId, testId: Number(testId) })
+            fetchTestStatus({
+              studentId,
+              testId: Number(testId),
+              isSubmitted: false,
+            })
           ).unwrap();
 
-          // Use server time if available, otherwise calculate from duration
-          const initialTime =
-            serverState.remainingTime || testDetails?.time_duration * 60;
-
-          // Ensure time doesn't go over test duration
-          const safeTime = Math.min(
-            initialTime,
-            testDetails?.time_duration * 60
-          );
+          const testDuration = testDetails.time_duration * 60;
+          const initialTime = serverState.remainingTime || testDuration;
+          const safeTime = Math.min(initialTime, testDuration);
 
           dispatch({ type: "test/setInitialTime", payload: safeTime });
         } catch (error) {
@@ -77,11 +101,11 @@ const TestInterface = () => {
       }
     };
     initializeTest();
-  }, [dispatch, testId, studentId, testDetails]);
+  }, [dispatch, testId, studentId, testDetails]); // Add testDetails to deps
 
-  useEffect(() => {
-    console.log("remaintime", remainingTime);
-  }, [remainingTime]);
+  // useEffect(() => {
+  //   console.log("remaintime", remainingTime);
+  // }, [remainingTime]);
 
   // Update the periodic sync useEffect
   useEffect(() => {
@@ -103,6 +127,7 @@ const TestInterface = () => {
             studentId,
             testId: Number(testId),
             remainingTime: currentTime ?? undefined,
+            isSubmitted: false,
           })
         ).unwrap();
 
@@ -144,17 +169,90 @@ const TestInterface = () => {
     if (isTestSubmitted) return;
 
     try {
-      await dispatch(
-        submitTest({
-          testId: Number(testId),
-          answers,
-        })
+      const timeTaken =
+        (testDetails?.time_duration || 0) * 60 - (remainingTime ?? 0);
+
+      // Transform answers
+      const responses = Object.entries(answers).reduce(
+        (acc, [index, optionId]) => {
+          const question = questions[Number(index)];
+          if (question) {
+            acc[question.question_id] = optionId;
+          }
+          return acc;
+        },
+        {} as Record<number, number>
       );
-      navigate(`/result/${testId}`);
+
+      const payload = {
+        test_id: Number(testId),
+        answers: responses,
+      };
+
+      console.log("Submitting Test Payload:", payload);
+
+      // 🚀 Check API call success
+      const submitResponse = await dispatch(submitTest(payload)).unwrap();
+      console.log("Test Submission Successful:", submitResponse);
+
+      // 🚀 Handle fetch test status separately
+      const testStatusResponse = await dispatch(
+        fetchTestStatus({
+          studentId,
+          testId: Number(testId),
+          isSubmitted: true,
+        })
+      ).unwrap();
+
+      console.log("Test Status Updated:", testStatusResponse);
+
+      // Navigate to results or dashboard
+      navigate(
+        testDetails?.quickEvaluation ? `/result/${testId}` : "/dashboard",
+        {
+          state: testDetails?.quickEvaluation
+            ? {
+                testId: Number(testId),
+                answers,
+                remainingTime: remainingTime ?? 0,
+                timeTaken,
+                testDetails,
+                questions,
+              }
+            : undefined,
+        }
+      );
     } catch (err) {
       console.error("Submission failed:", err);
+
+      if (err instanceof Error) {
+        if ((err as any).response) {
+          console.error("Server Response:", {
+            data: (err as any).response.data,
+            status: (err as any).response.status,
+            headers: (err as any).response.headers,
+          });
+          console.log(
+            (err as any).response.data.message || "Submission failed"
+          );
+        } else {
+          console.error("Error Message:", err.message);
+        }
+      } else {
+        console.error("Unknown error:", err);
+      }
     }
-  }, [isTestSubmitted, dispatch, testId, answers, navigate]);
+  }, [
+    isTestSubmitted,
+    dispatch,
+    testId,
+    studentId,
+    answers,
+    remainingTime,
+    testDetails,
+    navigate,
+    questions,
+  ]);
 
   // Auto-submit when time reaches 0
   useEffect(() => {
@@ -191,7 +289,16 @@ const TestInterface = () => {
 
   // Loading states
   if (loading) return <p>Loading questions...</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
+  // @ts-ignore
+  
+if (error) {
+  return (
+    <Alert variant="destructive">
+      <AlertCircle className="h-5 w-5" />
+      <p className="text-sm font-medium">{error.message}</p>
+    </Alert>
+  )
+}
   if (!questions.length) return <p>No questions available.</p>;
 
   const question = questions[currentQuestionIndex];
