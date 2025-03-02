@@ -64,7 +64,7 @@ const Dashboard = () => {
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ test_id: selectedTest }),
+            body: JSON.stringify({ testId: selectedTest }),
           }
         );
 

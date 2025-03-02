@@ -295,7 +295,7 @@ if (error) {
   return (
     <Alert variant="destructive">
       <AlertCircle className="h-5 w-5" />
-      <p className="text-sm font-medium">{error.message}</p>
+      <p className="text-sm font-medium">{error}</p>
     </Alert>
   )
 }
