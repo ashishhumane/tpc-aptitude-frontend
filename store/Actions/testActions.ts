@@ -66,11 +66,11 @@ export const getQuestions = createAsyncThunk(
 
 export const evaluateQuickTest = createAsyncThunk(
   "test/evaluateQuickTest",
-  async (testData: any, { rejectWithValue }) => {
+  async (id: any, { rejectWithValue }) => {
     try {
       const response = await axios.post(
         `${BASE_URL}/test/evaluate-quick-test`,
-        testData
+        { test_id: Number(id) }
       );
       return response.data;
     } catch (error) {

@@ -46,6 +46,10 @@ export default function App() {
                 <Route path="/test/:testId" element={<TestInterface />} />
                 <Route path="/result/:testId" element={<ResultInterface />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route
+                  path="/practice-result/:testId"
+                  element={<PracResultInterface />}
+                />
               </Route>
             </Route>
 
@@ -74,6 +78,7 @@ export default function App() {
 
 /* ✅ Extracted Layout with Sidebar */
 import { Outlet } from "react-router-dom";
+import PracResultInterface from "./Pages/User/PracResultInterface";
 function LayoutWithSidebar() {
   return (
     <>
@@ -83,5 +88,3 @@ function LayoutWithSidebar() {
     </>
   );
 }
-
-

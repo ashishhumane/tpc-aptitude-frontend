@@ -18,9 +18,9 @@ import {
   Check,
   Clock,
   Flag,
-  AlertCircle
+  AlertCircle,
 } from "lucide-react";
-import { Alert } from "@/components/ui/alert"
+import { Alert } from "@/components/ui/alert";
 import { useParams, useNavigate } from "react-router-dom";
 
 import { decrementTime } from "../../../store/Slices/testSlices"; // Import decrementTime action
@@ -43,7 +43,6 @@ const TestInterface = () => {
     : null;
 
   const { testId } = useParams();
-
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [calculatorOpen, setCalculatorOpen] = useState(false);
@@ -142,7 +141,6 @@ const TestInterface = () => {
       clearInterval(syncInterval);
     };
   }, [studentId, testId, isTestSubmitted, dispatch]);
-
   useEffect(() => {
     if (remainingTime !== null && remainingTime > 0) {
       const expectedTime = testDetails?.time_duration * 60;
@@ -163,6 +161,17 @@ const TestInterface = () => {
 
     return () => clearInterval(timerId);
   }, [remainingTime, isTestSubmitted, dispatch]);
+
+  const handlePracticeSubmit = async (id: any) => {
+    dispatch(
+      fetchTestStatus({
+        studentId,
+        testId: Number(testId),
+        isSubmitted: true,
+      })
+    ).unwrap();
+    navigate(`/practice-result/${id}`, { state: { answers, testDetails } });
+  };
 
   // Handle test submission
   const handleSubmit = useCallback(async () => {
@@ -290,15 +299,15 @@ const TestInterface = () => {
   // Loading states
   if (loading) return <p>Loading questions...</p>;
   // @ts-ignore
-  
-if (error) {
-  return (
-    <Alert variant="destructive">
-      <AlertCircle className="h-5 w-5" />
-      <p className="text-sm font-medium">{error.message}</p>
-    </Alert>
-  )
-}
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-5 w-5" />
+        <p className="text-sm font-medium">{(error as any).message || error}</p>
+      </Alert>
+    );
+  }
   if (!questions.length) return <p>No questions available.</p>;
 
   const question = questions[currentQuestionIndex];
@@ -353,7 +362,7 @@ if (error) {
             size="sm"
             className={`h-8 w-8 p-0 rounded-full transition-all relative ${
               answers[index]
-                ? "bg-green-100 hover:bg-green-200 dark:bg-green-900 dark:hover:bg-green-800"
+                ? "bg-green-400 hover:bg-green-200 dark:bg-green-600 dark:hover:bg-green-800"
                 : ""
             }`}
             onClick={() => setCurrentQuestionIndex(index)}
@@ -406,12 +415,22 @@ if (error) {
                     ? "default"
                     : "outline"
                 }
-                onClick={() =>
-                  setAnswers((prev) => ({
-                    ...prev,
-                    [currentQuestionIndex]: option.option_id,
-                  }))
-                }
+                onClick={() => {
+                  setAnswers((prev) => {
+                    const currentAnswer = prev[currentQuestionIndex];
+                    // Toggle selection if clicking the same option
+                    if (currentAnswer === option.option_id) {
+                      const newAnswers = { ...prev };
+                      delete newAnswers[currentQuestionIndex];
+                      return newAnswers;
+                    }
+                    // Select new option
+                    return {
+                      ...prev,
+                      [currentQuestionIndex]: option.option_id,
+                    };
+                  });
+                }}
                 className="h-24 flex flex-col items-center justify-center relative overflow-hidden group"
               >
                 {answers[currentQuestionIndex] === option.option_id && (
@@ -469,7 +488,13 @@ if (error) {
           </span>
           {isLastQuestion ? (
             <Button
-              onClick={handleSubmit}
+              onClick={
+                testDetails.quickEvaluation
+                  ? () => {
+                      handlePracticeSubmit(testDetails.test_id);
+                    }
+                  : handleSubmit
+              }
               className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
             >
               Submit Test

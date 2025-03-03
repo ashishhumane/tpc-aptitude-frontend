@@ -15,10 +15,20 @@ import {
 import { Card } from "@/components/ui/card";
 
 const Dashboard = () => {
-  const [tests, setTests] = useState([]);
-  const [selectedTest, setSelectedTest] = useState("");
-  const [topStudents, setTopStudents] = useState([]);
-  const [topStudentsError, setTopStudentsError] = useState("");
+  interface Test {
+    id: number;
+    name: string;
+  }
+
+  interface Student {
+    name: string;
+    totalScore: number;
+  }
+
+  const [tests, setTests] = useState<Test[]>([]);
+  const [selectedTest, setSelectedTest] = useState<string>("");
+  const [topStudents, setTopStudents] = useState<Student[]>([]);
+  const [topStudentsError, setTopStudentsError] = useState<string>("");
 
   useEffect(() => {
     const fetchTests = async () => {
@@ -57,6 +67,7 @@ const Dashboard = () => {
       setTopStudentsError(""); // Reset error before fetching
 
       try {
+        console.log(selectedTest);
         const response = await fetch(
           "http://localhost:5000/api/test/get-top-students",
           {
@@ -64,12 +75,14 @@ const Dashboard = () => {
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ test_id: selectedTest }),
+            body: JSON.stringify({ test_id: Number(selectedTest) }),
           }
         );
 
         if (!response.ok) {
-          throw new Error(`Failed to fetch top students: ${response.statusText}`);
+          throw new Error(
+            "Leaderboard has not updated yet"
+          );
         }
 
         const data = await response.json();
@@ -86,6 +99,7 @@ const Dashboard = () => {
 
     fetchTopStudents();
   }, [selectedTest]);
+  console.log(topStudents)
 
   return (
     <div className="flex flex-col w-full gap-6 p-6">
@@ -125,15 +139,17 @@ const Dashboard = () => {
                 topStudents.map((student: any, index) => (
                   <Card key={index} className="p-3 flex justify-between">
                     <span className="font-medium">
-                      {index + 1}. {student.name}
+                      {index + 1}. {student.student.firstName}
                     </span>
                     <span className="font-bold text-blue-600">
-                      {student.marks}
+                      {student.score}
                     </span>
                   </Card>
                 ))
               ) : (
-                <p className="text-gray-500 text-center">No results available</p>
+                <p className="text-gray-500 text-center">
+                  No results available
+                </p>
               )}
             </ul>
           )}
