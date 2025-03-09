@@ -164,6 +164,6 @@ export const fetchTestStatus = createAsyncThunk(
     }
   }
 );
-function getState(): RootState {
+export function getState(): RootState {
   return useSelector((state: RootState) => state);
 }
