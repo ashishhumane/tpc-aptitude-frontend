@@ -35,7 +35,7 @@ const Auth = (): React.ReactNode => {
     e.preventDefault();
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_BASE_URL}/api/auth/login`,
+        `${import.meta.env.VITE_BASE_URL}api/auth/login`,
         {
           email: formData.email,
           password: formData.password,
@@ -67,7 +67,7 @@ const Auth = (): React.ReactNode => {
     console.log(import.meta.env.VITE_BASE_URL);
     e.preventDefault();
     try {
-      await axios.post(`${import.meta.env.VITE_BASE_URL}/api/auth/register`, {
+      await axios.post(`${import.meta.env.VITE_BASE_URL}api/auth/register`, {
         email: formData.email,
       });
       setStep(2);
@@ -86,7 +86,7 @@ const Auth = (): React.ReactNode => {
     e.preventDefault();
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_BASE_URL}/api/auth/verify`,
+        `${import.meta.env.VITE_BASE_URL}api/auth/verify`,
         formData
       );
       const userData = {

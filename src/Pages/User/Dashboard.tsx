@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import DemoCalendar from "@/components/Calender";
+// import DemoCalendar from "@/components/Calender";
 import { CarouselDemo } from "@/components/Carausel";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Resources from "@/components/Resources";
@@ -34,7 +34,7 @@ const Dashboard = () => {
     const fetchTests = async () => {
       try {
         const response = await fetch(
-          "http://localhost:5000/api/test/get-real-tests",
+          "https://tpc-aptitude-portal-backend.onrender.com/api/test/get-real-tests",
           {
             method: "POST",
             headers: {
@@ -69,7 +69,7 @@ const Dashboard = () => {
       try {
         console.log(selectedTest);
         const response = await fetch(
-          "http://localhost:5000/api/test/get-top-students",
+          "https://tpc-aptitude-portal-backend.onrender.com/api/test/get-top-students",
           {
             method: "POST",
             headers: {
@@ -157,7 +157,7 @@ const Dashboard = () => {
       </div>
 
       {/* Calendar */}
-      <DemoCalendar />
+      {/* <DemoCalendar />  */}
       <Resources />
     </div>
   );

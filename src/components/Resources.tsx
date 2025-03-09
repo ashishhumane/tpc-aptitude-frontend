@@ -49,7 +49,7 @@ const Resources = () => {
   );
 
   return (
-    <div className="p-6 max-w-5xl">
+    <div className="p-6 max-w-full">
       {/* Title */}
       <h1 className="text-3xl font-bold text-center mb-6">📚 Aptitude Resources</h1>
 

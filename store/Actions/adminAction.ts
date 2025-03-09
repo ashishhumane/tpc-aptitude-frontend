@@ -2,7 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios, { AxiosError } from "axios";
 import { RootState } from "../store"; // Adjust the path as necessary
 
-const BASE_URL = "http://localhost:5000/api";
+const BASE_URL = "https://tpc-aptitude-portal-backend.onrender.com/api";
 
 export const createTest = createAsyncThunk(
   "admin/createTest",
