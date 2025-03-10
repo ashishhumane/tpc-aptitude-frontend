@@ -127,6 +127,7 @@ const Auth = (): React.ReactNode => {
         <TabsContent value="login" className="text-center">
           <form onSubmit={handleLogin} className="space-y-4">
             <Input
+              className="text-gray-800 dark:text-gray-300"
               type="email"
               name="email"
               placeholder="Email"
@@ -135,6 +136,7 @@ const Auth = (): React.ReactNode => {
               required
             />
             <Input
+              className="text-gray-800 dark:text-gray-300"
               type="password"
               name="password"
               placeholder="Password"
