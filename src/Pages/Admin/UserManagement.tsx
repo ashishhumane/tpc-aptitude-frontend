@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../store/store";
-import { getAllUsers } from "../../../store/Actions/adminAction";
+import { getAllUsers,deleteUser } from "../../../store/Actions/adminAction";
 import {
   useReactTable,
   getCoreRowModel,
@@ -42,9 +42,8 @@ const UserManagement = () => {
   }, [dispatch]);
 
   // Delete User
-  const deleteUser = (id: number) => {
-    console.log(`Deleting user with ID: ${id}`);
-    // You can add an API call here to delete the user from the backend
+  const handleDeleteUser = (id: number) => {
+    dispatch(deleteUser(id));
   };
 
   // Define table columns
@@ -73,7 +72,7 @@ const UserManagement = () => {
         <Button
           variant="destructive"
           size="sm"
-          onClick={() => deleteUser(row.original.id)}
+          onClick={() => handleDeleteUser(row.original.id)}
         >
           <Trash2 size={16} />
         </Button>

@@ -46,10 +46,10 @@ const TestPage = () => {
     <div className="p-6 max-w-6xl mx-auto">
       {/* Title */}
       <div className="text-center mb-10">
-        <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+        <h1 className="text-3xl font-bold mb-2 dark:text-primary text-gray-800">
           Practice Tests
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-gray-600 dark:text-gray-300">
           Test your knowledge with our curated collection of practice exams
         </p>
       </div>

@@ -59,7 +59,7 @@ const TestManagement = () => {
     async function getTests() {
       try {
         const response = await axios.get(
-          `${import.meta.env.VITE_BASE_URL}/api/admin/get-all-tests`,
+          `${import.meta.env.VITE_BASE_URL}api/admin/get-all-tests`,
           {
             headers: {
               Authorization: token,
@@ -102,7 +102,7 @@ const TestManagement = () => {
     if (deleteId !== null) {
       try {
         const response = await axios.post(
-          `${import.meta.env.VITE_BASE_URL}/api/admin/delete-test/`,
+          `${import.meta.env.VITE_BASE_URL}api/admin/delete-test/`,
           {
             testId: deleteId,
           },
@@ -140,7 +140,7 @@ const TestManagement = () => {
 
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_BASE_URL}/api/admin/toggle-listed`,
+        `${import.meta.env.VITE_BASE_URL}api/admin/toggle-listed`,
         { testId: id, is_listed: updatedValue },
         { headers: { Authorization: token } }
       );

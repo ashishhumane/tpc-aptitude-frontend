@@ -19,7 +19,7 @@ const Setting = () => {
     setLoading(true)
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/update-admin-status", {
+      const response = await fetch("https://tpc-aptitude-portal-backend.onrender.com/api/auth/update-admin-status", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
