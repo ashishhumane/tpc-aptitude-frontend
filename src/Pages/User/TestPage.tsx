@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { CalendarDays, ArrowRight } from "lucide-react";
+import {hideSidebar} from "../../../store/Slices/sidebarSlice.ts"
 
 const TestPage = () => {
   const [search, setSearch] = useState("");
@@ -39,6 +40,7 @@ const TestPage = () => {
   const navigate = useNavigate();
 
   const handleStartTest = (testId: number) => {
+    dispatch(hideSidebar());
     navigate(`/test/${testId}`);
   };
 

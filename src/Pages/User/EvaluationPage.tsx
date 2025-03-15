@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CalendarDays, ArrowRight } from "lucide-react";
+import {hideSidebar} from "../../../store/Slices/sidebarSlice.ts";
 
 const EvaluationPage = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -36,6 +37,7 @@ const EvaluationPage = () => {
   );
 
   const handleStartTest = (testId: number) => {
+    dispatch(hideSidebar());
     navigate(`/test/${testId}`);
   };
 

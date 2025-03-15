@@ -40,6 +40,7 @@ const ResultInterface = () => {
     const testData = testResult;
     const resultData = testResult.results[0];
     const passingScore = testData.totalQuestions * 0.5; // Adjust as per your criteria
+    console.log(testData)
 
     return {
       student: {
@@ -171,51 +172,83 @@ const ResultInterface = () => {
           <CardContent>
             <table className="w-full border-collapse border text-sm">
               <thead>
-                <tr className="bg-gray-200 dark:bg-zinc-950">
-                  <th className="border p-2">#</th>
-                  <th className="border p-2">Question</th>
-                  <th className="border p-2">Your Answer</th>
-                  <th className="border p-2">Correct Answer</th>
-                  <th className="border p-2">Status</th>
-                </tr>
+              <tr className="bg-gray-200 dark:bg-zinc-950">
+                <th className="border p-2">#</th>
+                <th className="border p-2">Question</th>
+                <th className="border p-2">Your Answer</th>
+                <th className="border p-2">Correct Answer</th>
+                <th className="border p-2">Status</th>
+              </tr>
               </thead>
               <tbody>
-                {computedResult.questions.map(
+              {computedResult.questions.map(
                   (
-                    q: {
-                      id: number;
-                      question: string;
-                      attemptedAnswer: string;
-                      correctAnswer: string;
-                      isCorrect: boolean;
-                    },
-                    index: number
+                      q: {
+                        id: number;
+                        question: string;
+                        attemptedAnswer: string | { text: string; imageLink?: string };
+                        correctAnswer: string | { text: string; imageLink?: string };
+                        isCorrect: boolean;
+                      },
+                      index: number
                   ) => (
-                    <tr key={q.id} className="text-center">
-                      <td className="border p-2">{index + 1}</td>
-                      <td className="border p-2 text-left">{q.question}</td>
-                      <td
-                        className={`border p-2 ${
-                          q.isCorrect ? "text-green-600" : "text-red-600"
-                        }`}
-                      >
-                        {q.attemptedAnswer}
-                      </td>
-                      <td className="border p-2">{q.correctAnswer}</td>
-                      <td className="border p-2">
-                        {q.isCorrect ? (
-                          <Badge className="bg-green-600 hover:bg-green-700 text-white">
-                            Correct
-                          </Badge>
-                        ) : (
-                          <Badge className="bg-red-500 text-white">
-                            Incorrect
-                          </Badge>
-                        )}
-                      </td>
-                    </tr>
+                      <tr key={q.id} className="text-center">
+                        <td className="border p-2">{index + 1}</td>
+                        <td className="border p-2 text-left">{q.question}</td>
+
+                        {/* Your Answer */}
+                        <td
+                            className={`border p-2 ${
+                                q.isCorrect ? "text-green-600" : "text-red-600"
+                            }`}
+                        >
+                          {typeof q.attemptedAnswer === "string" ? (
+                              q.attemptedAnswer
+                          ) : (
+                              <div>
+                                {q.attemptedAnswer.text}
+                                {q.attemptedAnswer.imageLink && (
+                                    <img
+                                        src={q.attemptedAnswer.imageLink}
+                                        alt="Attempted Answer"
+                                        className="max-w-full h-20 object-contain mt-2"
+                                    />
+                                )}
+                              </div>
+                          )}
+                        </td>
+
+                        {/* Correct Answer */}
+                        <td className="border p-2">
+                          {typeof q.correctAnswer === "string" ? (
+                              q.correctAnswer
+                          ) : (
+                              <div>
+                                {q.correctAnswer.text}
+                                {q.correctAnswer.imageLink && (
+                                    <img
+                                        src={q.correctAnswer.imageLink}
+                                        alt="Correct Answer"
+                                        className="max-w-full h-20 object-contain mt-2"
+                                    />
+                                )}
+                              </div>
+                          )}
+                        </td>
+
+                        {/* Status */}
+                        <td className="border p-2">
+                          {q.isCorrect ? (
+                              <Badge className="bg-green-600 hover:bg-green-700 text-white">
+                                Correct
+                              </Badge>
+                          ) : (
+                              <Badge className="bg-red-500 text-white">Incorrect</Badge>
+                          )}
+                        </td>
+                      </tr>
                   )
-                )}
+              )}
               </tbody>
             </table>
           </CardContent>

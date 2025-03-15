@@ -39,6 +39,8 @@ import { ModeToggle } from "@/components/mode-toggle"; // Import ModeToggle comp
 import AdminOnly from "../AdminOnly";
 import { useDispatch } from "react-redux";
 import { logout } from "../../../store/authSlice.ts";
+import {useSelector} from "react-redux";
+import {RootState} from "../../../store/store.ts"
 
 // User Menu Items
 const userItems = [
@@ -82,6 +84,10 @@ console.log(studentId);
 
 export function AppSidebar() {
   const dispatch = useDispatch();
+  const isSidebarVisible = useSelector(
+      (state: RootState) => state.sidebar.isSidebarVisible
+  );
+  if (!isSidebarVisible) return null;
   return (
     <Sidebar collapsible="icon" className="w-64">
       <SidebarContent>
@@ -150,7 +156,7 @@ export function AppSidebar() {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton className="w-full flex items-center justify-between">
               <User className="mr-2" />
-              {studentId.email}
+              {studentId? studentId.email:"Invalid"}
               <ChevronDown className="ml-auto" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>

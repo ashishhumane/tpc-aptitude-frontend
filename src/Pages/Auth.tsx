@@ -112,11 +112,11 @@ const Auth = (): React.ReactNode => {
   };
 
   return (
-    <div className="flex flex-col h-screen w-full justify-center items-center  text-white">
+    <div className="flex flex-col h-screen w-full  justify-center items-center  text-white">
       <h1 className="text-xl font-semibold">Authentication</h1>
       <Tabs
         defaultValue="login"
-        className="w-[400px] dark:bg-zinc-950  p-6 shadow-lg rounded-lg"
+        className="w-[400px] dark:bg-zinc-950 p-6 shadow-lg rounded-lg"
       >
         <TabsList className="flex justify-center mb-4">
           <TabsTrigger value="login">Login</TabsTrigger>

@@ -24,6 +24,7 @@ import { Alert } from "@/components/ui/alert";
 import { useParams, useNavigate } from "react-router-dom";
 
 import { decrementTime } from "../../../store/Slices/testSlices"; // Import decrementTime action
+import {showSidebar} from "../../../store/Slices/sidebarSlice.ts"
 
 const TestInterface = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -192,6 +193,9 @@ const TestInterface = () => {
         },
         {} as Record<number, number>
       );
+      if(responses){
+        dispatch(showSidebar());
+      }
 
       const payload = {
         test_id: Number(testId),
@@ -204,20 +208,9 @@ const TestInterface = () => {
       const submitResponse = await dispatch(submitTest(payload)).unwrap();
       console.log("Test Submission Successful:", submitResponse);
 
-      // 🚀 Handle fetch test status separately
-      const testStatusResponse = await dispatch(
-        fetchTestStatus({
-          studentId,
-          testId: Number(testId),
-          isSubmitted: true,
-        })
-      ).unwrap();
-
-      console.log("Test Status Updated:", testStatusResponse);
-
       // Navigate to results or dashboard
       navigate(
-        testDetails?.quickEvaluation ? `/result/${testId}` : "/dashboard",
+        `/result/${testId}`,
         {
           state: testDetails?.quickEvaluation
             ? {

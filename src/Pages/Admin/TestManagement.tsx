@@ -91,9 +91,9 @@ const TestManagement = () => {
     if (filterType === "all") {
       setFilteredTests(tests);
     } else if (filterType === "practice") {
-      setFilteredTests(tests.filter((test) => !test.isQuickEvaluation));
-    } else if (filterType === "evaluation") {
       setFilteredTests(tests.filter((test) => test.isQuickEvaluation));
+    } else if (filterType === "evaluation") {
+      setFilteredTests(tests.filter((test) => !test.isQuickEvaluation));
     }
   }, [filterType, tests]);
 
@@ -164,7 +164,7 @@ const TestManagement = () => {
       accessorKey: "isQuickEvaluation",
       header: "Test Type",
       cell: ({ row }) =>
-        row.original.isQuickEvaluation ? "Evaluation" : "Practice",
+        row.original.isQuickEvaluation ? "Practice" : "Evaluation",
     },
     {
       accessorKey: "isListed",
