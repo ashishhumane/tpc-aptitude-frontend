@@ -550,7 +550,7 @@ const TestInterface = () => {
               onClick={
                 testDetails.quickEvaluation
                   ? () => {
-                      handlePracticeSubmit ( testDetails.test_id ).then (  r => console.log("submitted"));
+                      handlePracticeSubmit ( testDetails.test_id ).then (  r => console.log(r));
                     }
                   : handleSubmit
               }
