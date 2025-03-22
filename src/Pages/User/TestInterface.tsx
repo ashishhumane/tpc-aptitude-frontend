@@ -24,7 +24,6 @@ import { Alert } from "@/components/ui/alert";
 import { useParams, useNavigate } from "react-router-dom";
 
 import { decrementTime } from "../../../store/Slices/testSlices"; // Import decrementTime action
-import {showSidebar} from "../../../store/Slices/sidebarSlice.ts"
 
 const TestInterface = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -73,7 +72,7 @@ const TestInterface = () => {
       }
     };
 
-    loadTestContent();
+    loadTestContent ().then ( r  => console.log(r) );
   }, [dispatch, testId, studentId]);
 
   // Modify the initialization useEffect to handle missing testDetails
@@ -100,7 +99,7 @@ const TestInterface = () => {
         }
       }
     };
-    initializeTest();
+    initializeTest ().then ( r  => console.log(r));
   }, [dispatch, testId, studentId, testDetails]); // Add testDetails to deps
 
   // useEffect(() => {
@@ -180,22 +179,19 @@ const TestInterface = () => {
 
     try {
       const timeTaken =
-        (testDetails?.time_duration || 0) * 60 - (remainingTime ?? 0);
+          (testDetails?.time_duration || 0) * 60 - (remainingTime ?? 0);
 
       // Transform answers
       const responses = Object.entries(answers).reduce(
-        (acc, [index, optionId]) => {
-          const question = questions[Number(index)];
-          if (question) {
-            acc[question.question_id] = optionId;
-          }
-          return acc;
-        },
-        {} as Record<number, number>
+          (acc, [index, optionId]) => {
+            const question = questions[Number(index)];
+            if (question) {
+              acc[question.question_id] = optionId;
+            }
+            return acc;
+          },
+          {} as Record<number, number>
       );
-      if(responses){
-        dispatch(showSidebar());
-      }
 
       const payload = {
         test_id: Number(testId),
@@ -208,21 +204,32 @@ const TestInterface = () => {
       const submitResponse = await dispatch(submitTest(payload)).unwrap();
       console.log("Test Submission Successful:", submitResponse);
 
+      // 🚀 Handle fetch test status separately
+      const testStatusResponse = await dispatch(
+          fetchTestStatus({
+            studentId,
+            testId: Number(testId),
+            isSubmitted: true,
+          })
+      ).unwrap();
+
+      console.log("Test Status Updated:", testStatusResponse);
+
       // Navigate to results or dashboard
       navigate(
-        `/result/${testId}`,
-        {
-          state: testDetails?.quickEvaluation
-            ? {
-                testId: Number(testId),
-                answers,
-                remainingTime: remainingTime ?? 0,
-                timeTaken,
-                testDetails,
-                questions,
-              }
-            : undefined,
-        }
+          testDetails?.quickEvaluation ? `/result/${testId}` : "/dashboard",
+          {
+            state: testDetails?.quickEvaluation
+                ? {
+                  testId: Number(testId),
+                  answers,
+                  remainingTime: remainingTime ?? 0,
+                  timeTaken,
+                  testDetails,
+                  questions,
+                }
+                : undefined,
+          }
       );
     } catch (err) {
       console.error("Submission failed:", err);
@@ -235,7 +242,7 @@ const TestInterface = () => {
             headers: (err as any).response.headers,
           });
           console.log(
-            (err as any).response.data.message || "Submission failed"
+              (err as any).response.data.message || "Submission failed"
           );
         } else {
           console.error("Error Message:", err.message);
@@ -256,10 +263,12 @@ const TestInterface = () => {
     questions,
   ]);
 
+
+
   // Auto-submit when time reaches 0
   useEffect(() => {
     if (remainingTime === 0 && !isTestSubmitted) {
-      handleSubmit();
+      handleSubmit ().then ( r  => console.log(r));
     }
   }, [remainingTime, isTestSubmitted, handleSubmit]);
 
@@ -290,8 +299,65 @@ const TestInterface = () => {
   }, []);
 
   // Loading states
-  if (loading) return <p>Loading questions...</p>;
-  // @ts-ignore
+  if (loading) return (
+      <div className="w-full p-6 space-y-6">
+        {/* Progress Bar Skeleton */}
+        <div className="h-2.5 bg-gray-200 rounded-full dark:bg-zinc-700 w-full animate-pulse"></div>
+
+        {/* Header Skeleton */}
+        <div className="flex flex-col md:flex-row justify-between items-start gap-4 p-4 bg-gray-100 dark:bg-zinc-950 rounded-md">
+          <div className="h-6 bg-gray-300 rounded-md dark:bg-zinc-700 w-1/4"></div>
+          <div className="flex gap-4">
+            <div className="h-8 w-24 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
+            <div className="h-8 w-24 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
+          </div>
+        </div>
+
+        {/* Question Navigation Skeleton */}
+        <div className="grid grid-cols-5 md:grid-cols-10 gap-2 p-4">
+          {[...Array(10)].map((_, i) => (
+              <div key={i} className="h-8 w-8 bg-gray-200 rounded-full dark:bg-zinc-700 animate-pulse"></div>
+          ))}
+        </div>
+
+        {/* Separator Skeleton */}
+        <div className="h-px bg-gray-200 dark:bg-zinc-700 w-full"></div>
+
+        {/* Main Content Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Question Card Skeleton */}
+          <div className="h-[400px] bg-gray-100 dark:bg-zinc-900 rounded-xl p-6">
+            <div className="h-6 bg-gray-300 rounded-md dark:bg-zinc-700 w-1/3 mb-4"></div>
+            <div className="h-64 bg-gray-200 rounded-lg dark:bg-zinc-800 animate-pulse"></div>
+          </div>
+
+          {/* Options Card Skeleton */}
+          <div className="h-[400px] bg-gray-100 dark:bg-zinc-900 rounded-xl p-6">
+            <div className="h-6 bg-gray-300 rounded-md dark:bg-zinc-700 w-1/3 mb-4"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[...Array(4)].map((_, i) => (
+                  <div key={i} className="h-24 bg-gray-200 rounded-md dark:bg-zinc-800 animate-pulse"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation Controls Skeleton */}
+        <div className="flex justify-between items-center mt-6">
+          <div className="flex gap-2">
+            <div className="h-10 w-24 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
+            <div className="h-10 w-36 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="h-6 w-20 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
+            <div className="h-10 w-32 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
+          </div>
+        </div>
+
+        {/* Calculator Button Skeleton */}
+        <div className="fixed bottom-4 right-4 h-10 w-32 bg-gray-300 rounded-md dark:bg-zinc-700 animate-pulse"></div>
+      </div>
+  );
 
   if (error) {
     return (
@@ -484,7 +550,7 @@ const TestInterface = () => {
               onClick={
                 testDetails.quickEvaluation
                   ? () => {
-                      handlePracticeSubmit(testDetails.test_id);
+                      handlePracticeSubmit ( testDetails.test_id ).then (  r => console.log("submitted"));
                     }
                   : handleSubmit
               }
