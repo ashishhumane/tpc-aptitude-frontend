@@ -6,7 +6,6 @@ import authReducer from "./authSlice";
 import adminReducer from "./Slices/adminSlices"; // Import admin reducer
 import testReducer from "./Slices/testSlices"; // Import test reducer
 import resultReducer from "./Slices/resultSlice"; // Import result reducer
-import sidebarReducer from "./Slices/sidebarSlice"
 
 const persistConfig = {
   key: "root",
@@ -19,7 +18,6 @@ const rootReducer = combineReducers({
   admin: adminReducer,
   test: testReducer,
   result: resultReducer,
-  sidebar: sidebarReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

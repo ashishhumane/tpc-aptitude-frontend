@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect,useRef, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../store/store";
 import { store } from "../../../store/store";
@@ -8,6 +8,7 @@ import {
   submitTest,
 } from "../../../store/Actions/testActions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {Toaster} from "@/components/ui/sonner.tsx"
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -27,6 +28,7 @@ import { decrementTime } from "../../../store/Slices/testSlices"; // Import decr
 
 const TestInterface = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const leaveAttempted = useRef(false)
   const navigate = useNavigate();
   const {
     questions,
@@ -37,6 +39,54 @@ const TestInterface = () => {
     isTestSubmitted,
   } = useSelector((state: RootState) => state.test);
   const persistedData = localStorage.getItem("persist:root");
+
+  useEffect(() => {
+    const disableInspect = (e: MouseEvent | KeyboardEvent) => {
+      // Block right-click
+      if (e instanceof MouseEvent && e.button === 2) {
+        e.preventDefault();
+        // @ts-ignore
+        Toaster('Right-click is disabled during the test.');
+        return false;
+      }
+
+      // Block keyboard shortcuts
+      if (e instanceof KeyboardEvent) {
+        const forbiddenKeys = [
+          "F12",
+          "F8",
+          "F7",
+          "ContextMenu",
+          "c",
+          "C",
+          "I",
+          "i",
+          "J",
+          "j",
+        ];
+        const ctrlShiftCombos = ["I", "C", "J", "j", "i", "c"];
+
+        if (
+            forbiddenKeys.includes(e.key) ||
+            (e.ctrlKey && e.shiftKey && ctrlShiftCombos.includes(e.key))
+        ) {
+          e.preventDefault();
+          Toaster("This action is disabled during the test.");
+          return false;
+        }
+      }
+    };
+
+    window.addEventListener("contextmenu", disableInspect);
+    window.addEventListener("keydown", disableInspect);
+
+    return () => {
+      window.removeEventListener("contextmenu", disableInspect);
+      window.removeEventListener("keydown", disableInspect);
+    };
+  }, []);
+
+
 
   const studentId = persistedData
     ? JSON.parse(JSON.parse(persistedData).auth).user.userId
@@ -105,6 +155,7 @@ const TestInterface = () => {
   // useEffect(() => {
   //   console.log("remaintime", remainingTime);
   // }, [remainingTime]);
+
 
   // Update the periodic sync useEffect
   useEffect(() => {
@@ -297,6 +348,45 @@ const TestInterface = () => {
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   }, []);
+
+  // Handle browser navigation
+  useEffect(() => {
+    // Block tab close/reload
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "Are you sure you want to leave? Your test will be submitted!";
+    };
+
+    // Handle back/forward button
+    const handlePopState = () => {
+      if (!leaveAttempted.current) {
+        const confirmLeave = window.confirm(
+            "WARNING: If you leave this test now, you won't be able to retake it. Are you sure you want to leave?"
+        );
+
+        if (confirmLeave) {
+          leaveAttempted.current = true;
+          handleSubmit().finally(() => navigate(-1));
+        } else {
+          window.history.pushState(null, "", window.location.pathname);
+          leaveAttempted.current = true;
+        }
+      } else {
+        handleSubmit().finally(() => navigate(-1));
+      }
+    };
+
+    window.history.pushState(null, "", window.location.pathname);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("popstate", handlePopState);
+      window.history.go(-1);
+    };
+  }, [handleSubmit, navigate]);
+
 
   // Loading states
   if (loading) return (

@@ -43,7 +43,6 @@ export default function App() {
                 <Route path="/tests/practice" element={<TestPage />} />
                 <Route path="/tests/evaluation" element={<EvaluationPage />} />
                 <Route path="/results" element={<ResultPage />} />
-                <Route path="/test/:testId" element={<TestInterface />} />
                 <Route path="/result/:testId" element={<ResultInterface />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route
@@ -51,6 +50,7 @@ export default function App() {
                   element={<PracResultInterface />}
                 />
               </Route>
+              <Route path="/test/:testId" element={<TestInterface />} />
             </Route>
 
             {/* Protected Admin Routes (With Sidebar) */}

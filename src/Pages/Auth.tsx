@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import {Loader2} from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
@@ -23,6 +24,9 @@ const Auth = (): React.ReactNode => {
     isAdmin: false,
     rememberMe: false,
   });
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
+
   const [step, setStep] = useState(1);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -33,6 +37,7 @@ const Auth = (): React.ReactNode => {
 
   const handleLogin = async (e: any) => {
     e.preventDefault();
+    setIsLoggingIn(true);
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_BASE_URL}api/auth/login`,
@@ -59,7 +64,9 @@ const Auth = (): React.ReactNode => {
     } catch (error: any) {
       toast.error("Error", {
         description: error.response?.data?.message || "Login failed",
-      });
+      })
+    }finally{
+      setIsLoggingIn(false);
     }
   };
 
@@ -84,6 +91,7 @@ const Auth = (): React.ReactNode => {
   const handleRegister = async (e: any) => {
     console.log(formData.otp);
     e.preventDefault();
+    setIsRegistering(true);
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_BASE_URL}api/auth/verify`,
@@ -108,6 +116,8 @@ const Auth = (): React.ReactNode => {
       toast.error("Error", {
         description: error.response?.data?.message || "Registration failed",
       });
+    }finally {
+      setIsRegistering(false);
     }
   };
 
@@ -145,8 +155,15 @@ const Auth = (): React.ReactNode => {
               required
             />
 
-            <Button type="submit" className="w-full">
-              Login
+            <Button type="submit" className="w-full" disabled={isLoggingIn}>
+              {isLoggingIn ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+              ) : (
+                  "Login"
+              )}
             </Button>
           </form>
         </TabsContent>
@@ -215,8 +232,15 @@ const Auth = (): React.ReactNode => {
                 onChange={handleChange}
                 required
               />
-              <Button type="submit" className="w-full">
-                Register
+              <Button type="submit" className="w-full" disabled={isLoggingIn}>
+                {isRegistering ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                ) : (
+                    "Register"
+                )}
               </Button>
             </form>
           )}
