@@ -71,7 +71,7 @@ const TestInterface = () => {
             (e.ctrlKey && e.shiftKey && ctrlShiftCombos.includes(e.key))
         ) {
           e.preventDefault();
-          Toaster("This action is disabled during the test.");
+          Toaster(<>This action is disabled during test</>);
           return false;
         }
       }
