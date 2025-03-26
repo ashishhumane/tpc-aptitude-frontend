@@ -2,10 +2,11 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../store/store";
 import { store } from "../../../store/store";
+import {shallowEqual} from "react-redux"
 import {
-  getQuestions,
-  fetchTestStatus,
-  submitTest,
+  getQuestions ,
+  fetchTestStatus ,
+  submitTest ,
 } from "../../../store/Actions/testActions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Toaster } from "@/components/ui/sonner.tsx"
@@ -23,22 +24,31 @@ import {
 import { Alert } from "@/components/ui/alert";
 import { useParams, useNavigate } from "react-router-dom";
 
-import { decrementTime } from "../../../store/Slices/testSlices"; // Import decrementTime action
+import { decrementTime } from "../../../store/Slices/testSlices";
+import axios from "axios";
 
 const TestInterface = () => {
+  const [enlargedImage, setEnlargedImage] = useState<{
+    url: string;
+    optionText?: string;
+  } | null>(null);
   const dispatch = useDispatch<AppDispatch>();
   const fullScreenRef = useRef(false);
   const escapeAttemptRef = useRef(0);
 
+
   const navigate = useNavigate();
-  const {
-    questions,
-    testDetails,
-    loading,
-    error,
-    remainingTime,
-    isTestSubmitted,
-  } = useSelector((state: RootState) => state.test);
+  const { questions, testDetails, loading, error, remainingTime, isTestSubmitted } = useSelector(
+      (state: RootState) => ({
+        questions: state.test.questions,
+        testDetails: state.test.testDetails,
+        loading: state.test.loading,
+        error: state.test.error,
+        remainingTime: state.test.remainingTime,
+        isTestSubmitted: state.test.isTestSubmitted,
+      }),
+      shallowEqual // Add shallow equality check
+  );
   const persistedData = localStorage.getItem("persist:root");
 
 
@@ -118,23 +128,28 @@ const TestInterface = () => {
     const syncInterval = setInterval(async () => {
       try {
         const currentTime = store.getState().test.remainingTime;
+        const token = store.getState().auth.token; // Get fresh token each time
 
-        // Send current remaining time to server
-        await dispatch(
-          fetchTestStatus({
-            studentId,
-            testId: Number(testId),
-            remainingTime: currentTime ?? undefined,
-            isSubmitted: false,
-          })
-        ).unwrap();
-
+        // Correct axios call structure
+        await axios.post(
+            'https://tpc-aptitude-portal-backend.onrender.com/api/test/handle-test', // Use correct endpoint
+            { // Request body
+              studentId,
+              testId: Number(testId),
+              remainingTime: currentTime,
+              isSubmitted: false,
+            },
+            { // Config object
+              headers: {
+                Authorization: `Bearer ${token}`, // Add Bearer prefix
+              },
+            }
+        );
         console.log(`Synced ${currentTime} with server`);
       } catch (error) {
         console.error("Sync failed:", error);
       }
-    }, 30000); // 30 seconds
-
+    }, 30000);
     return () => {
       clearInterval(timerId);
       clearInterval(syncInterval);
@@ -394,6 +409,7 @@ const TestInterface = () => {
     // Block keyboard events on input elements
     const inputElements = document.querySelectorAll('input, textarea, [contenteditable="true"]');
     inputElements.forEach(el => {
+      // @ts-expect-error
       el.addEventListener('keydown', disableInspect);
     });
 
@@ -403,6 +419,7 @@ const TestInterface = () => {
       window.removeEventListener("keydown", disableInspect);
 
       inputElements.forEach(el => {
+        // @ts-expect-error
         el.removeEventListener('keydown', disableInspect);
       });
     };
@@ -412,10 +429,11 @@ const TestInterface = () => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (!isTestSubmitted) {
         e.preventDefault();
-        e.returnValue = 'Are you sure you want to leave? Your test progress may be lost.';
-        return e.returnValue;
+        alert("Are you sure you want to leave? Your test progress may be lost."); // Optional alert
+        e.preventDefault(); // Ensures the event is triggered
       }
     };
+
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => {
@@ -429,7 +447,8 @@ const TestInterface = () => {
       // Block right-click
       if (e instanceof MouseEvent && e.button === 2) {
         e.preventDefault();
-        // @ts-ignore
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error
         Toaster('Right-click is disabled during the test.');
         return false;
       }
@@ -514,11 +533,6 @@ const TestInterface = () => {
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   }, []);
-
-
-
-
-
   // Loading states
   if (loading) return (
     <div className="w-full p-6 space-y-6">
@@ -707,15 +721,26 @@ const TestInterface = () => {
                   <Check className="w-6 h-6 absolute top-2 right-2 text-white dark:text-black" />
                 )}
                 {option.option_image_url ? (
-                  <img
-                    src={option.option_image_url}
-                    alt="Option"
-                    className="w-full h-full object-contain p-2"
-                  />
+                    <div className="relative w-full h-full">
+                      <img
+                          src={option.option_image_url}
+                          alt="Option"
+                          className="w-full h-full object-contain p-2 cursor-zoom-in"
+                          onDoubleClick={() => setEnlargedImage({
+                            url: option.option_image_url,
+                            optionText: option.option_text
+                          })}
+                      />
+                      {option.option_text && (
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-center text-sm p-1">
+                            {option.option_text}
+                          </div>
+                      )}
+                    </div>
                 ) : (
-                  <span className="text-center break-words px-4">
-                    {option.option_text}
-                  </span>
+                    <span className="text-center break-words px-4">
+          {option.option_text}
+        </span>
                 )}
               </Button>
             ))}
@@ -781,6 +806,25 @@ const TestInterface = () => {
           )}
         </div>
       </div>
+      {enlargedImage && (
+          <div
+              className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center cursor-zoom-out"
+              onClick={() => setEnlargedImage(null)}
+          >
+            <div className="max-w-[90vw] max-h-[90vh] flex flex-col items-center">
+              <img
+                  src={enlargedImage.url}
+                  alt="Enlarged option"
+                  className="object-contain max-h-[80vh]"
+              />
+              {enlargedImage.optionText && (
+                  <p className="mt-4 text-lg text-white bg-black/50 px-4 py-2 rounded-lg">
+                    {enlargedImage.optionText}
+                  </p>
+              )}
+            </div>
+          </div>
+      )}
     </div>
   );
 };

@@ -26,6 +26,7 @@ const Auth = (): React.ReactNode => {
   });
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [isGettingOtp, setIsGettingOtp] = useState(false);
 
   const [step, setStep] = useState(1);
   const dispatch = useDispatch();
@@ -47,7 +48,7 @@ const Auth = (): React.ReactNode => {
         }
       );
 
-      toast.success("Login Successful", { description: response.data.message });
+      toast.success(response.data.message);
       console.log("userId", response.data);
       const userData = {
         user: {
@@ -73,6 +74,7 @@ const Auth = (): React.ReactNode => {
   const handleGetOTP = async (e: any) => {
     console.log(import.meta.env.VITE_BASE_URL);
     e.preventDefault();
+    setIsGettingOtp(true);
     try {
       await axios.post(`${import.meta.env.VITE_BASE_URL}api/auth/register`, {
         email: formData.email,
@@ -85,6 +87,8 @@ const Auth = (): React.ReactNode => {
       toast.error("Error", {
         description: error.response?.data?.message || "Failed to send OTP",
       });
+    }finally {
+      setIsGettingOtp(false)
     }
   };
 
@@ -176,12 +180,20 @@ const Auth = (): React.ReactNode => {
                 type="email"
                 name="email"
                 placeholder="Email"
+                className="text-black dark:text-white"
                 value={formData.email}
                 onChange={handleChange}
                 required
               />
               <Button type="submit" className="w-full">
-                Get OTP
+                {isGettingOtp ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                ) : (
+                    "Get Otp"
+                )}
               </Button>
             </form>
           ) : (
@@ -195,13 +207,13 @@ const Auth = (): React.ReactNode => {
                 onChange={(value) => setFormData({ ...formData, otp: value })} // Fix here
               >
                 <label htmlFor="">OTP </label>
-                <InputOTPGroup>
+                <InputOTPGroup className="text-black dark:text-white">
                   <InputOTPSlot index={0} />
                   <InputOTPSlot index={1} />
                   <InputOTPSlot index={2} />
                 </InputOTPGroup>
                 <InputOTPSeparator />
-                <InputOTPGroup>
+                <InputOTPGroup className="text-black dark:text-white">
                   <InputOTPSlot index={3} />
                   <InputOTPSlot index={4} />
                   <InputOTPSlot index={5} />
@@ -211,6 +223,7 @@ const Auth = (): React.ReactNode => {
               <Input
                 type="text"
                 name="firstName"
+                className="text-black dark:text-white"
                 placeholder="First Name"
                 value={formData.firstName}
                 onChange={handleChange}
@@ -220,6 +233,7 @@ const Auth = (): React.ReactNode => {
                 type="text"
                 name="lastName"
                 placeholder="Last Name"
+                className="text-black dark:text-white"
                 value={formData.lastName}
                 onChange={handleChange}
                 required
@@ -228,6 +242,7 @@ const Auth = (): React.ReactNode => {
                 type="password"
                 name="password"
                 placeholder="Password"
+                className="text-black dark:text-white"
                 value={formData.password}
                 onChange={handleChange}
                 required

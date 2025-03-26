@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import {useSelector} from "react-redux";
 import {
   Home,
   ClipboardList,
@@ -72,16 +73,9 @@ const adminItems = [
   { title: "Settings", url: "/admin/settings", icon: Settings },
 ];
 
-
-const persistedData = localStorage.getItem("persist:root");
-
-const studentId = persistedData
-  ? JSON.parse(JSON.parse(persistedData).auth).user
-  : null;
-console.log(studentId);
-
 export function AppSidebar() {
   const dispatch = useDispatch();
+  const user = useSelector((state: any) => state.auth.user);
   return (
     <Sidebar collapsible="icon" className="w-64">
       <SidebarContent>
@@ -150,7 +144,7 @@ export function AppSidebar() {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton className="w-full flex items-center justify-between">
               <User className="mr-2" />
-              {studentId? studentId.email:"Invalid"}
+              {user ? user.email : "Invalid"}
               <ChevronDown className="ml-auto" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
