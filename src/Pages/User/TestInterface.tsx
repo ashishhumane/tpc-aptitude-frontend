@@ -1,4 +1,4 @@
-import { useState, useEffect,useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../store/store";
 import { store } from "../../../store/store";
@@ -8,14 +8,13 @@ import {
   submitTest,
 } from "../../../store/Actions/testActions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {Toaster} from "@/components/ui/sonner.tsx"
+import { Toaster } from "@/components/ui/sonner.tsx"
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
   ChevronLeft,
   ChevronRight,
-  Calculator,
   Check,
   Clock,
   Flag,
@@ -28,7 +27,9 @@ import { decrementTime } from "../../../store/Slices/testSlices"; // Import decr
 
 const TestInterface = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const leaveAttempted = useRef(false)
+  const fullScreenRef = useRef(false);
+  const escapeAttemptRef = useRef(0);
+
   const navigate = useNavigate();
   const {
     questions,
@@ -40,52 +41,6 @@ const TestInterface = () => {
   } = useSelector((state: RootState) => state.test);
   const persistedData = localStorage.getItem("persist:root");
 
-  useEffect(() => {
-    const disableInspect = (e: MouseEvent | KeyboardEvent) => {
-      // Block right-click
-      if (e instanceof MouseEvent && e.button === 2) {
-        e.preventDefault();
-        // @ts-ignore
-        Toaster('Right-click is disabled during the test.');
-        return false;
-      }
-
-      // Block keyboard shortcuts
-      if (e instanceof KeyboardEvent) {
-        const forbiddenKeys = [
-          "F12",
-          "F8",
-          "F7",
-          "ContextMenu",
-          "c",
-          "C",
-          "I",
-          "i",
-          "J",
-          "j",
-        ];
-        const ctrlShiftCombos = ["I", "C", "J", "j", "i", "c"];
-
-        if (
-            forbiddenKeys.includes(e.key) ||
-            (e.ctrlKey && e.shiftKey && ctrlShiftCombos.includes(e.key))
-        ) {
-          e.preventDefault();
-          Toaster(<>This action is disabled during test</>);
-          return false;
-        }
-      }
-    };
-
-    window.addEventListener("contextmenu", disableInspect);
-    window.addEventListener("keydown", disableInspect);
-
-    return () => {
-      window.removeEventListener("contextmenu", disableInspect);
-      window.removeEventListener("keydown", disableInspect);
-    };
-  }, []);
-
 
 
   const studentId = persistedData
@@ -95,7 +50,6 @@ const TestInterface = () => {
   const { testId } = useParams();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
-  const [calculatorOpen, setCalculatorOpen] = useState(false);
   const [markedQuestions, setMarkedQuestions] = useState<Set<number>>(
     new Set()
   );
@@ -122,7 +76,7 @@ const TestInterface = () => {
       }
     };
 
-    loadTestContent ().then ( r  => console.log(r) );
+    loadTestContent().then(r => console.log(r));
   }, [dispatch, testId, studentId]);
 
   // Modify the initialization useEffect to handle missing testDetails
@@ -149,15 +103,9 @@ const TestInterface = () => {
         }
       }
     };
-    initializeTest ().then ( r  => console.log(r));
-  }, [dispatch, testId, studentId, testDetails]); // Add testDetails to deps
+    initializeTest().then(r => console.log(r));
+  }, [dispatch, testId, studentId, testDetails]);
 
-  // useEffect(() => {
-  //   console.log("remaintime", remainingTime);
-  // }, [remainingTime]);
-
-
-  // Update the periodic sync useEffect
   useEffect(() => {
     if (!studentId || !testId || isTestSubmitted) return;
 
@@ -230,18 +178,18 @@ const TestInterface = () => {
 
     try {
       const timeTaken =
-          (testDetails?.time_duration || 0) * 60 - (remainingTime ?? 0);
+        (testDetails?.time_duration || 0) * 60 - (remainingTime ?? 0);
 
       // Transform answers
       const responses = Object.entries(answers).reduce(
-          (acc, [index, optionId]) => {
-            const question = questions[Number(index)];
-            if (question) {
-              acc[question.question_id] = optionId;
-            }
-            return acc;
-          },
-          {} as Record<number, number>
+        (acc, [index, optionId]) => {
+          const question = questions[Number(index)];
+          if (question) {
+            acc[question.question_id] = optionId;
+          }
+          return acc;
+        },
+        {} as Record<number, number>
       );
 
       const payload = {
@@ -257,30 +205,30 @@ const TestInterface = () => {
 
       // 🚀 Handle fetch test status separately
       const testStatusResponse = await dispatch(
-          fetchTestStatus({
-            studentId,
-            testId: Number(testId),
-            isSubmitted: true,
-          })
+        fetchTestStatus({
+          studentId,
+          testId: Number(testId),
+          isSubmitted: true,
+        })
       ).unwrap();
 
       console.log("Test Status Updated:", testStatusResponse);
 
       // Navigate to results or dashboard
       navigate(
-          testDetails?.quickEvaluation ? `/result/${testId}` : "/dashboard",
-          {
-            state: testDetails?.quickEvaluation
-                ? {
-                  testId: Number(testId),
-                  answers,
-                  remainingTime: remainingTime ?? 0,
-                  timeTaken,
-                  testDetails,
-                  questions,
-                }
-                : undefined,
-          }
+        testDetails?.quickEvaluation ? `/result/${testId}` : "/dashboard",
+        {
+          state: testDetails?.quickEvaluation
+            ? {
+              testId: Number(testId),
+              answers,
+              remainingTime: remainingTime ?? 0,
+              timeTaken,
+              testDetails,
+              questions,
+            }
+            : undefined,
+        }
       );
     } catch (err) {
       console.error("Submission failed:", err);
@@ -293,7 +241,7 @@ const TestInterface = () => {
             headers: (err as any).response.headers,
           });
           console.log(
-              (err as any).response.data.message || "Submission failed"
+            (err as any).response.data.message || "Submission failed"
           );
         } else {
           console.error("Error Message:", err.message);
@@ -314,12 +262,230 @@ const TestInterface = () => {
     questions,
   ]);
 
+  const enterFullScreen = useCallback(() => {
+    const elem = document.documentElement;
+    if (!fullScreenRef.current) {
+      if (elem.requestFullscreen) {
+        elem.requestFullscreen()
+          .then(() => {
+            fullScreenRef.current = true;
+            escapeAttemptRef.current = 0;
+          })
+          .catch(err => {
+            console.error(`Error enabling fullscreen: ${err.message}`);
+          });
+      }
+    }
+  }, []);
+
+  const exitFullScreen = useCallback(() => {
+    if (document.exitFullscreen && fullScreenRef.current && isTestSubmitted) {
+      document.exitFullscreen()
+        .then(() => {
+          fullScreenRef.current = false;
+        })
+        .catch(err => {
+          console.error(`Error exiting fullscreen: ${err.message}`);
+        });
+    }
+  }, [isTestSubmitted]);
+
+  const blockEscapeKey = useCallback((e: KeyboardEvent) => {
+    if (e.key === "Escape" && !isTestSubmitted) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+
+      // Re-enter fullscreen if somehow exited
+      if (!document.fullscreenElement) {
+        enterFullScreen();
+      }
+
+      // Show warning after multiple attempts
+      escapeAttemptRef.current += 1;
+      if (escapeAttemptRef.current > 2) {
+        alert("The Escape key is disabled during the test. Please complete the test first.");
+      }
+      return false;
+    }
+  }, [enterFullScreen, isTestSubmitted]);
+
+  useEffect(() => {
+    // Use capture phase and make non-passive to ensure we catch it first
+    const options = { capture: true, passive: false };
+
+    window.addEventListener('keydown', blockEscapeKey, options);
+
+    return () => {
+      window.removeEventListener('keydown', blockEscapeKey, options);
+    };
+  }, [blockEscapeKey]);
+
+
+  useEffect(() => {
+    enterFullScreen();
+
+    return () => {
+      exitFullScreen();
+    };
+  }, [enterFullScreen, exitFullScreen]);
+
+  useEffect(() => {
+    if (isTestSubmitted) {
+      exitFullScreen();
+    }
+  }, [isTestSubmitted, exitFullScreen]);
+
+  const disableInspect = useCallback((e: MouseEvent | KeyboardEvent) => {
+    // Block right-click
+    if (e instanceof MouseEvent && e.button === 2) {
+      e.preventDefault();
+      return false;
+    }
+
+    // Block keyboard shortcuts
+    if (e instanceof KeyboardEvent) {
+
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+
+      const forbiddenKeys = [
+        "F12", "F8", "F7", "ContextMenu",
+        "c", "C", "I", "i", "J", "j"
+      ];
+      const ctrlShiftCombos = ["I", "C", "J", "j", "i", "c"];
+
+      // Block specific keys
+      if (forbiddenKeys.includes(e.key)) {
+        e.preventDefault();
+        return false;
+      }
+
+      // Block Ctrl+Shift combinations
+      if (e.ctrlKey && e.shiftKey && ctrlShiftCombos.includes(e.key)) {
+        e.preventDefault();
+        return false;
+      }
+
+      // Block Alt+Tab, Ctrl+Tab, etc.
+      if (e.altKey || e.ctrlKey) {
+        if (["Tab", "F4"].includes(e.key)) {
+          e.preventDefault();
+          return false;
+        }
+      }
+
+      // Block Windows key (Meta key) combinations
+      if (e.metaKey) {
+        e.preventDefault();
+        return false;
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    // Add all event listeners
+    window.addEventListener("contextmenu", disableInspect);
+    window.addEventListener("keydown", disableInspect);
+
+    // Block keyboard events on input elements
+    const inputElements = document.querySelectorAll('input, textarea, [contenteditable="true"]');
+    inputElements.forEach(el => {
+      el.addEventListener('keydown', disableInspect);
+    });
+
+    // Cleanup function
+    return () => {
+      window.removeEventListener("contextmenu", disableInspect);
+      window.removeEventListener("keydown", disableInspect);
+
+      inputElements.forEach(el => {
+        el.removeEventListener('keydown', disableInspect);
+      });
+    };
+  }, [disableInspect]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!isTestSubmitted) {
+        e.preventDefault();
+        e.returnValue = 'Are you sure you want to leave? Your test progress may be lost.';
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isTestSubmitted]);
+
+  useEffect(() => {
+    // Disable right-click and keyboard shortcuts
+    const disableInspect = (e: MouseEvent | KeyboardEvent) => {
+      // Block right-click
+      if (e instanceof MouseEvent && e.button === 2) {
+        e.preventDefault();
+        // @ts-ignore
+        Toaster('Right-click is disabled during the test.');
+        return false;
+      }
+
+      // Block keyboard shortcuts
+      if (e instanceof KeyboardEvent) {
+        const forbiddenKeys = [
+          "F12",
+          "F8",
+          "F7",
+          "ContextMenu",
+          "c",
+          "C",
+          "I",
+          "i",
+          "J",
+          "j",
+        ];
+        const ctrlShiftCombos = ["I", "C", "J", "j", "i", "c"];
+
+        if (
+          forbiddenKeys.includes(e.key) ||
+          (e.ctrlKey && e.shiftKey && ctrlShiftCombos.includes(e.key))
+        ) {
+          e.preventDefault();
+          Toaster(<>This action is disabled during test</>);
+          return false;
+        }
+
+        // Block Alt+Tab, Ctrl+Tab, etc.
+        if (e.altKey || e.ctrlKey) {
+          if (["Tab", "F4"].includes(e.key)) {
+            e.preventDefault();
+            Toaster(<>Tab switching is disabled during the test</>);
+            return false;
+          }
+        }
+      }
+    };
+
+
+    // Add all event listeners
+    window.addEventListener("contextmenu", disableInspect);
+    window.addEventListener("keydown", disableInspect);
+    // Cleanup function
+    return () => {
+      window.removeEventListener("contextmenu", disableInspect);
+      window.removeEventListener("keydown", disableInspect);
+    };
+  }, [handleSubmit, testDetails?.strictMode]); // Add dependencies
 
 
   // Auto-submit when time reaches 0
   useEffect(() => {
     if (remainingTime === 0 && !isTestSubmitted) {
-      handleSubmit ().then ( r  => console.log(r));
+      handleSubmit().then(r => console.log(r));
     }
   }, [remainingTime, isTestSubmitted, handleSubmit]);
 
@@ -349,104 +515,67 @@ const TestInterface = () => {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   }, []);
 
-  // Handle browser navigation
-  useEffect(() => {
-    // Block tab close/reload
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = "Are you sure you want to leave? Your test will be submitted!";
-    };
 
-    // Handle back/forward button
-    const handlePopState = () => {
-      if (!leaveAttempted.current) {
-        const confirmLeave = window.confirm(
-            "WARNING: If you leave this test now, you won't be able to retake it. Are you sure you want to leave?"
-        );
 
-        if (confirmLeave) {
-          leaveAttempted.current = true;
-          handleSubmit().finally(() => navigate(-1));
-        } else {
-          window.history.pushState(null, "", window.location.pathname);
-          leaveAttempted.current = true;
-        }
-      } else {
-        handleSubmit().finally(() => navigate(-1));
-      }
-    };
-
-    window.history.pushState(null, "", window.location.pathname);
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    window.addEventListener("popstate", handlePopState);
-
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-      window.removeEventListener("popstate", handlePopState);
-      window.history.go(-1);
-    };
-  }, [handleSubmit, navigate]);
 
 
   // Loading states
   if (loading) return (
-      <div className="w-full p-6 space-y-6">
-        {/* Progress Bar Skeleton */}
-        <div className="h-2.5 bg-gray-200 rounded-full dark:bg-zinc-700 w-full animate-pulse"></div>
+    <div className="w-full p-6 space-y-6">
+      {/* Progress Bar Skeleton */}
+      <div className="h-2.5 bg-gray-200 rounded-full dark:bg-zinc-700 w-full animate-pulse"></div>
 
-        {/* Header Skeleton */}
-        <div className="flex flex-col md:flex-row justify-between items-start gap-4 p-4 bg-gray-100 dark:bg-zinc-950 rounded-md">
-          <div className="h-6 bg-gray-300 rounded-md dark:bg-zinc-700 w-1/4"></div>
-          <div className="flex gap-4">
-            <div className="h-8 w-24 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
-            <div className="h-8 w-24 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
-          </div>
+      {/* Header Skeleton */}
+      <div className="flex flex-col md:flex-row justify-between items-start gap-4 p-4 bg-gray-100 dark:bg-zinc-950 rounded-md">
+        <div className="h-6 bg-gray-300 rounded-md dark:bg-zinc-700 w-1/4"></div>
+        <div className="flex gap-4">
+          <div className="h-8 w-24 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
+          <div className="h-8 w-24 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
         </div>
-
-        {/* Question Navigation Skeleton */}
-        <div className="grid grid-cols-5 md:grid-cols-10 gap-2 p-4">
-          {[...Array(10)].map((_, i) => (
-              <div key={i} className="h-8 w-8 bg-gray-200 rounded-full dark:bg-zinc-700 animate-pulse"></div>
-          ))}
-        </div>
-
-        {/* Separator Skeleton */}
-        <div className="h-px bg-gray-200 dark:bg-zinc-700 w-full"></div>
-
-        {/* Main Content Skeleton */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Question Card Skeleton */}
-          <div className="h-[400px] bg-gray-100 dark:bg-zinc-900 rounded-xl p-6">
-            <div className="h-6 bg-gray-300 rounded-md dark:bg-zinc-700 w-1/3 mb-4"></div>
-            <div className="h-64 bg-gray-200 rounded-lg dark:bg-zinc-800 animate-pulse"></div>
-          </div>
-
-          {/* Options Card Skeleton */}
-          <div className="h-[400px] bg-gray-100 dark:bg-zinc-900 rounded-xl p-6">
-            <div className="h-6 bg-gray-300 rounded-md dark:bg-zinc-700 w-1/3 mb-4"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[...Array(4)].map((_, i) => (
-                  <div key={i} className="h-24 bg-gray-200 rounded-md dark:bg-zinc-800 animate-pulse"></div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Navigation Controls Skeleton */}
-        <div className="flex justify-between items-center mt-6">
-          <div className="flex gap-2">
-            <div className="h-10 w-24 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
-            <div className="h-10 w-36 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="h-6 w-20 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
-            <div className="h-10 w-32 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
-          </div>
-        </div>
-
-        {/* Calculator Button Skeleton */}
-        <div className="fixed bottom-4 right-4 h-10 w-32 bg-gray-300 rounded-md dark:bg-zinc-700 animate-pulse"></div>
       </div>
+
+      {/* Question Navigation Skeleton */}
+      <div className="grid grid-cols-5 md:grid-cols-10 gap-2 p-4">
+        {[...Array(10)].map((_, i) => (
+          <div key={i} className="h-8 w-8 bg-gray-200 rounded-full dark:bg-zinc-700 animate-pulse"></div>
+        ))}
+      </div>
+
+      {/* Separator Skeleton */}
+      <div className="h-px bg-gray-200 dark:bg-zinc-700 w-full"></div>
+
+      {/* Main Content Skeleton */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Question Card Skeleton */}
+        <div className="h-[400px] bg-gray-100 dark:bg-zinc-900 rounded-xl p-6">
+          <div className="h-6 bg-gray-300 rounded-md dark:bg-zinc-700 w-1/3 mb-4"></div>
+          <div className="h-64 bg-gray-200 rounded-lg dark:bg-zinc-800 animate-pulse"></div>
+        </div>
+
+        {/* Options Card Skeleton */}
+        <div className="h-[400px] bg-gray-100 dark:bg-zinc-900 rounded-xl p-6">
+          <div className="h-6 bg-gray-300 rounded-md dark:bg-zinc-700 w-1/3 mb-4"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-24 bg-gray-200 rounded-md dark:bg-zinc-800 animate-pulse"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Controls Skeleton */}
+      <div className="flex justify-between items-center mt-6">
+        <div className="flex gap-2">
+          <div className="h-10 w-24 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
+          <div className="h-10 w-36 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="h-6 w-20 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
+          <div className="h-10 w-32 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
+        </div>
+      </div>
+
+    </div>
   );
 
   if (error) {
@@ -492,13 +621,6 @@ const TestInterface = () => {
             <Clock className="w-4 h-4" />
             {formatTime(remainingTime ?? 0)}
           </Badge>
-          <Button
-            size="sm"
-            variant={calculatorOpen ? "default" : "outline"}
-            onClick={() => setCalculatorOpen(!calculatorOpen)}
-          >
-            <Calculator className="w-5 h-5 mr-1" /> Calculator
-          </Button>
         </div>
       </div>
 
@@ -509,11 +631,10 @@ const TestInterface = () => {
             key={index}
             variant={currentQuestionIndex === index ? "default" : "outline"}
             size="sm"
-            className={`h-8 w-8 p-0 rounded-full transition-all relative ${
-              answers[index]
+            className={`h-8 w-8 p-0 rounded-full transition-all relative ${answers[index]
                 ? "bg-green-400 hover:bg-green-200 dark:bg-green-600 dark:hover:bg-green-800"
                 : ""
-            }`}
+              }`}
             onClick={() => setCurrentQuestionIndex(index)}
           >
             {index + 1}
@@ -640,8 +761,8 @@ const TestInterface = () => {
               onClick={
                 testDetails.quickEvaluation
                   ? () => {
-                      handlePracticeSubmit ( testDetails.test_id ).then (  r => console.log(r));
-                    }
+                    handlePracticeSubmit(testDetails.test_id).then(r => console.log(r));
+                  }
                   : handleSubmit
               }
               className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
