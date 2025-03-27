@@ -1,3 +1,5 @@
+import SyntaxHighlighter from 'react-syntax-highlighter';
+import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../store/store";
@@ -409,6 +411,7 @@ const TestInterface = () => {
     // Block keyboard events on input elements
     const inputElements = document.querySelectorAll('input, textarea, [contenteditable="true"]');
     inputElements.forEach(el => {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-expect-error
       el.addEventListener('keydown', disableInspect);
     });
@@ -419,6 +422,7 @@ const TestInterface = () => {
       window.removeEventListener("keydown", disableInspect);
 
       inputElements.forEach(el => {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-expect-error
         el.removeEventListener('keydown', disableInspect);
       });
@@ -671,7 +675,7 @@ const TestInterface = () => {
               Question {currentQuestionIndex + 1}
             </CardTitle>
           </CardHeader>
-          <CardContent className="flex items-center justify-center h-[calc(100%-80px)]">
+          <CardContent className="flex items-center justify-center h-[calc(100%-80px)] overflow-y-auto max-h-[60vh]">
             {question.question_image_url ? (
               <img
                 src={question.question_image_url}
@@ -679,9 +683,21 @@ const TestInterface = () => {
                 className="max-w-full max-h-[300px] object-contain rounded-lg shadow-md"
               />
             ) : (
-              <p className="text-lg text-center text-gray-700 dark:text-gray-300">
-                {question.question_text}
-              </p>
+                <div className="w-full p-4">
+                  {question.question_text.startsWith('```') ? (
+                      <SyntaxHighlighter
+                          language="javascript"
+                          style={atomOneDark}
+                          className="rounded-lg p-4 text-sm max-h-[500px] overflow-y-auto"
+                      >
+                        {question.question_text.replace(/```\w*/g, '')}
+                      </SyntaxHighlighter>
+                  ) : (
+                      <pre className="text-lg whitespace-pre-wrap font-sans">
+          {question.question_text}
+        </pre>
+                  )}
+                </div>
             )}
           </CardContent>
         </Card>
@@ -689,6 +705,7 @@ const TestInterface = () => {
         <Card className="h-full min-h-[400px] transition-all duration-300">
           <CardHeader>
             <CardTitle>Select your answer</CardTitle>
+           <p className="text-[10px] text-gray-400">*Double tap on options to focus the image</p>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {question.options.map((option: any) => (
@@ -731,11 +748,23 @@ const TestInterface = () => {
                             optionText: option.option_text
                           })}
                       />
-                      {option.option_text && (
-                          <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-center text-sm p-1">
-                            {option.option_text}
+                      {option.option_text ? (
+                          <div className="w-full h-full overflow-y-auto p-2">
+                            {option.option_text.startsWith('```') ? (
+                                <SyntaxHighlighter
+                                    language="javascript"
+                                    style={atomOneDark}
+                                    className="rounded-lg p-2 text-xs max-h-[200px]"
+                                >
+                                  {option.option_text.replace(/```\w*/g, '')}
+                                </SyntaxHighlighter>
+                            ) : (
+                                <pre className="whitespace-pre-wrap text-sm max-h-[200px] overflow-y-auto font-mono">
+        {option.option_text}
+      </pre>
+                            )}
                           </div>
-                      )}
+                      ) : null}
                     </div>
                 ) : (
                     <span className="text-center break-words px-4">

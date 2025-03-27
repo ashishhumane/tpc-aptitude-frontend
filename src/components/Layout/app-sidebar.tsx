@@ -11,6 +11,7 @@ import {
   LogOut,
   ChevronDown,
   NotepadText,
+  ShieldCheck,
 } from "lucide-react";
 
 import {
@@ -69,6 +70,11 @@ const adminItems = [
     title: "Result Management",
     url: "/admin/result-manage",
     icon: NotepadText,
+  },
+  {
+    title: "Qualified students",
+    url: "/admin/qualified",
+    icon: ShieldCheck
   },
   { title: "Settings", url: "/admin/settings", icon: Settings },
 ];

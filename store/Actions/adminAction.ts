@@ -2,7 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios, { AxiosError } from "axios";
 import { RootState } from "../store"; // Adjust the path as necessary
 
-const BASE_URL = "https://tpc-aptitude-portal-backend.onrender.com/api";
+const BASE_URL = "http://13.127.61.140:4000/api";
 
 export const createTest = createAsyncThunk(
   "admin/createTest",
@@ -181,4 +181,31 @@ export const unpublishResult = createAsyncThunk(
       return rejectWithValue("An unexpected error occurred");
     }
   }
+);
+
+// adminAction.ts
+export const getTopNStudents = createAsyncThunk(
+    "admin/getTopNStudents",
+    async (
+        { testId, limit }: { testId: number; limit: number },
+        { getState, rejectWithValue }
+    ) => {
+        try {
+            const state = getState() as RootState;
+            const token = state.auth.token;
+
+            const response = await axios.post(
+                `${BASE_URL}/test/get-top-n-students`,
+                { testId, limit },
+                {
+                    headers: {
+                        Authorization: `${token}`,
+                    },
+                }
+            );
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data || "An error occurred");
+        }
+    }
 );

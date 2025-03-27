@@ -5,7 +5,8 @@ import { combineReducers } from "redux";
 import authReducer from "./authSlice";
 import adminReducer from "./Slices/adminSlices"; // Import admin reducer
 import testReducer from "./Slices/testSlices"; // Import test reducer
-import resultReducer from "./Slices/resultSlice"; // Import result reducer
+import resultReducer from "./Slices/resultSlice";
+import {useDispatch} from "react-redux"; // Import result reducer
 
 const persistConfig = {
   key: "root",
@@ -41,5 +42,7 @@ const persistor = persistStore(store);
 // Export types
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
+// Create a typed useDispatch hook
+export const useAppDispatch = () => useDispatch<AppDispatch>();
 
 export { store, persistor };

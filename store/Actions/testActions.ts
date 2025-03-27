@@ -3,7 +3,7 @@ import axios, { AxiosError } from "axios";
 import { RootState } from "../store";
 import { useSelector } from "react-redux";
 
-const BASE_URL = "https://tpc-aptitude-portal-backend.onrender.com/api";
+const BASE_URL = "http://13.127.61.140:4000/api";
 
 
 type SubmitTestPayload = {

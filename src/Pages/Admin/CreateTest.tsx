@@ -47,7 +47,7 @@ export default function CreateTestForm() {
           text: "",
           imageLink: null,
           difficulty: "Easy",
-          options: Array(3).fill({ text: "", imageLink: null, isCorrect: false }),
+          options: Array(4).fill({ text: "", imageLink: null, isCorrect: false }),
         },
       ],
     },
@@ -77,6 +77,12 @@ export default function CreateTestForm() {
       }
     } catch (error) {
       toast.error("Something Went Wrong");
+    }
+  };
+
+  const handleTextAreaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
     }
   };
 
@@ -136,7 +142,12 @@ export default function CreateTestForm() {
               <div key={question.id} className="p-6 border rounded-lg space-y-4">
                 <div>
                   <Label>Question {qIndex + 1} Text</Label>
-                  <Input {...register(`questions.${qIndex}.text`)} placeholder="Enter question text" className="w-full" />
+                  <Textarea
+                      {...register(`questions.${qIndex}.text`)}
+                      placeholder="Enter question text (use Shift+Enter for new line)"
+                      className="w-full min-h-[100px]"
+                      onKeyDown={handleTextAreaKeyDown}
+                  />
                 </div>
 
                 <div>
@@ -147,7 +158,12 @@ export default function CreateTestForm() {
                 <h4 className="font-semibold">Options</h4>
                 {question.options.map((_, optIndex) => (
                   <div key={optIndex} className="space-y-2">
-                    <Input {...register(`questions.${qIndex}.options.${optIndex}.text`)} placeholder={`Option ${optIndex + 1}`} className="w-full" />
+                    <Textarea
+                        {...register(`questions.${qIndex}.options.${optIndex}.text`)}
+                        placeholder={`Option ${optIndex + 1} (use Shift+Enter for new line)`}
+                        className="w-full"
+                        onKeyDown={handleTextAreaKeyDown}
+                    />
                     <Input {...register(`questions.${qIndex}.options.${optIndex}.imageLink`)} placeholder="Option Image URL (optional)" className="w-full" />
                     <Controller
                       name={`questions.${qIndex}.options.${optIndex}.isCorrect`}
@@ -167,7 +183,7 @@ export default function CreateTestForm() {
               </div>
             ))}
 
-            <Button type="button" onClick={() => append({ text: "", imageLink: null, difficulty: "Easy", options: Array(3).fill({ text: "", imageLink: null, isCorrect: false }) })}>
+            <Button type="button" onClick={() => append({ text: "", imageLink: null, difficulty: "Easy", options: Array(4).fill({ text: "", imageLink: null, isCorrect: false }) })}>
               Add Question
             </Button>
           </div>

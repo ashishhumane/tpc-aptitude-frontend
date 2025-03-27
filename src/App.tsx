@@ -18,6 +18,7 @@ import TestManagement from "@/Pages/Admin/TestManagement";
 import UserManagement from "@/Pages/Admin/UserManagement";
 import ResultManage from "@/Pages/Admin/ResultManage";
 import Settings from "@/Pages/Admin/Setting";
+import QualifiedStudent from "@/Pages/Admin/QualifyStudents.tsx"
 //hello
 // Authentication Pages
 import Auth from "@/Pages/Auth";
@@ -63,6 +64,7 @@ export default function App() {
                 <Route path="result-manage" element={<ResultManage />} />
                 <Route path="reports" element={<Reports />} />
                 <Route path="settings" element={<Settings />} />
+                <Route path="qualified" element={<QualifiedStudent />} />
               </Route>
             </Route>
 

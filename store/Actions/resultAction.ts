@@ -1,7 +1,7 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API_BASE_URL = "https://tpc-aptitude-portal-backend.onrender.com";
+const API_BASE_URL = "http://13.127.61.140:4000";
 
 // Fetch available test results for a student
 export const getAvailableResults = createAsyncThunk(
