@@ -134,7 +134,7 @@ const TestInterface = () => {
 
         // Correct axios call structure
         await axios.post(
-            'https://tpc-aptitude-portal-backend.onrender.com/api/test/handle-test', // Use correct endpoint
+            'http://new-portal-loadbalancer-1041373362.ap-south-1.elb.amazonaws.com/api/test/handle-test', // Use correct endpoint
             { // Request body
               studentId,
               testId: Number(testId),
