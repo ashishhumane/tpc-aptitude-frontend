@@ -2,7 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios, { AxiosError } from "axios";
 import { RootState } from "../store"; // Adjust the path as necessary
 
-const BASE_URL = "http://13.127.61.140:4000/api";
+const BASE_URL = "http://new-portal-loadbalancer-1041373362.ap-south-1.elb.amazonaws.com/api";
 
 export const createTest = createAsyncThunk(
   "admin/createTest",

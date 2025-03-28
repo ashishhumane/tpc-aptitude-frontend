@@ -1,7 +1,7 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API_BASE_URL = "http://13.127.61.140:4000";
+const API_BASE_URL = "http://new-portal-loadbalancer-1041373362.ap-south-1.elb.amazonaws.com";
 
 // Fetch available test results for a student
 export const getAvailableResults = createAsyncThunk(
