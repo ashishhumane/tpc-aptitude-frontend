@@ -16,6 +16,7 @@ const ResultPage = () => {
   );
   console.log("student_id", student_id);
 
+
   // Fetch results from Redux store
   const { availableResults, loading, error } = useSelector(
     (state: RootState) => state.result

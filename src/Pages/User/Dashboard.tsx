@@ -60,45 +60,45 @@ const Dashboard = () => {
     fetchTests();
   }, []);
 
-  useEffect(() => {
-    if (!selectedTest) return;
-
-    const fetchTopStudents = async () => {
-      setTopStudentsError(""); // Reset error before fetching
-
-      try {
-        console.log(selectedTest);
-        const response = await fetch(
-          "https://tpc-aptitude-portal-backend.onrender.com/api/test/get-top-students",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ test_id: Number(selectedTest) }),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            "Leaderboard has not updated yet"
-          );
-        }
-
-        const data = await response.json();
-        setTopStudents(data);
-      } catch (error) {
-        console.error("Error fetching top students:", error);
-        if (error instanceof Error) {
-          setTopStudentsError(error.message);
-        } else {
-          setTopStudentsError("An unknown error occurred");
-        }
-      }
-    };
-
-    fetchTopStudents();
-  }, [selectedTest]);
+  // useEffect(() => {
+  //   if (!selectedTest) return;
+  //
+  //   const fetchTopStudents = async () => {
+  //     setTopStudentsError(""); // Reset error before fetching
+  //
+  //     try {
+  //       console.log(selectedTest);
+  //       const response = await fetch(
+  //         "https://tpc-aptitude-portal-backend.onrender.com/api/test/get-top-students",
+  //         {
+  //           method: "POST",
+  //           headers: {
+  //             "Content-Type": "application/json",
+  //           },
+  //           body: JSON.stringify({ test_id: Number(selectedTest) }),
+  //         }
+  //       );
+  //
+  //       if (!response.ok) {
+  //         throw new Error(
+  //           "Leaderboard has not updated yet"
+  //         );
+  //       }
+  //
+  //       const data = await response.json();
+  //       setTopStudents(data);
+  //     } catch (error) {
+  //       console.error("Error fetching top students:", error);
+  //       if (error instanceof Error) {
+  //         setTopStudentsError(error.message);
+  //       } else {
+  //         setTopStudentsError("An unknown error occurred");
+  //       }
+  //     }
+  //   };
+  //
+  //   fetchTopStudents();
+  // }, [selectedTest]);
   console.log(topStudents)
 
   return (
@@ -114,51 +114,51 @@ const Dashboard = () => {
         </div>
 
         {/* Scrollable Top Scorers Section */}
-        <ScrollArea className="lg:w-1/4 w-full h-96 border rounded-lg shadow-md p-4 bg-white dark:bg-black">
-          <h2 className="text-lg font-semibold mb-2">🏆 Top 10 Scorers</h2>
+        {/*<ScrollArea className="lg:w-1/4 w-full h-96 border rounded-lg shadow-md p-4 bg-white dark:bg-black">*/}
+        {/*  <h2 className="text-lg font-semibold mb-2">🏆 Top 10 Scorers</h2>*/}
 
-          {/* Test Selection Dropdown */}
-          <Select value={selectedTest} onValueChange={setSelectedTest}>
-            <SelectTrigger className="w-full mb-3">
-              <SelectValue placeholder="Select a Test" />
-            </SelectTrigger>
-            <SelectContent>
-              {tests.map((test: any) => (
-                <SelectItem key={test.id} value={test.id}>
-                  {test.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        {/*  /!* Test Selection Dropdown *!/*/}
+        {/*  <Select value={selectedTest} onValueChange={setSelectedTest}>*/}
+        {/*    <SelectTrigger className="w-full mb-3">*/}
+        {/*      <SelectValue placeholder="Select a Test" />*/}
+        {/*    </SelectTrigger>*/}
+        {/*    <SelectContent>*/}
+        {/*      {tests.map((test: any) => (*/}
+        {/*        <SelectItem key={test.id} value={test.id}>*/}
+        {/*          {test.name}*/}
+        {/*        </SelectItem>*/}
+        {/*      ))}*/}
+        {/*    </SelectContent>*/}
+        {/*  </Select>*/}
 
-          {topStudentsError ? (
-            <p className="text-red-500 text-center">{topStudentsError}</p>
-          ) : (
-            <ul className="space-y-2">
-              {topStudents.length > 0 ? (
-                topStudents.map((student: any, index) => (
-                  <Card key={index} className="p-3 flex justify-between">
-                    <span className="font-medium">
-                      {index + 1}. {student.student.firstName}
-                    </span>
-                    <span className="font-bold text-blue-600">
-                      {student.score}
-                    </span>
-                  </Card>
-                ))
-              ) : (
-                <p className="text-gray-500 text-center">
-                  No results available
-                </p>
-              )}
-            </ul>
-          )}
-        </ScrollArea>
+        {/*  {topStudentsError ? (*/}
+        {/*    <p className="text-red-500 text-center">{topStudentsError}</p>*/}
+        {/*  ) : (*/}
+        {/*    <ul className="space-y-2">*/}
+        {/*      {topStudents.length > 0 ? (*/}
+        {/*        topStudents.map((student: any, index) => (*/}
+        {/*          <Card key={index} className="p-3 flex justify-between">*/}
+        {/*            <span className="font-medium">*/}
+        {/*              {index + 1}. {student.student.firstName}*/}
+        {/*            </span>*/}
+        {/*            <span className="font-bold text-blue-600">*/}
+        {/*              {student.score}*/}
+        {/*            </span>*/}
+        {/*          </Card>*/}
+        {/*        ))*/}
+        {/*      ) : (*/}
+        {/*        <p className="text-gray-500 text-center">*/}
+        {/*          No results available*/}
+        {/*        </p>*/}
+        {/*      )}*/}
+        {/*    </ul>*/}
+        {/*  )}*/}
+        {/*</ScrollArea>*/}
       </div>
 
       {/* Calendar */}
       {/* <DemoCalendar />  */}
-      <Resources />
+      {/*<Resources />*/}
     </div>
   );
 };

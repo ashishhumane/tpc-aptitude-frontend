@@ -37,6 +37,8 @@ const TestInterface = () => {
   const dispatch = useDispatch<AppDispatch>();
   const fullScreenRef = useRef(false);
   const escapeAttemptRef = useRef(0);
+  const [tabChangeCount, setTabChangeCount] = useState(0);
+  const [hasShownWarning, setHasShownWarning] = useState(false);
 
 
   const navigate = useNavigate();
@@ -190,12 +192,17 @@ const TestInterface = () => {
   };
 
   // Handle test submission
-  const handleSubmit = useCallback(async () => {
+  const handleSubmit = useCallback(async (isForced = false) => {
     if (isTestSubmitted) return;
 
     try {
       const timeTaken =
         (testDetails?.time_duration || 0) * 60 - (remainingTime ?? 0);
+
+      if (isForced) {
+        navigate('/dashboard');
+        alert("Test submitted Goodbye!");
+      }
 
       // Transform answers
       const responses = Object.entries(answers).reduce(
@@ -278,6 +285,50 @@ const TestInterface = () => {
     navigate,
     questions,
   ]);
+
+  useEffect(() => {
+    if (remainingTime === 0 && !isTestSubmitted) {
+      handleSubmit(true).then(r => console.log(r));
+    }
+  }, [remainingTime, isTestSubmitted, handleSubmit]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && !isTestSubmitted) {
+        const newCount = tabChangeCount + 1;
+        setTabChangeCount(newCount);
+
+        if (newCount === 1) {
+          // First tab change
+          setCurrentQuestionIndex(0);
+          alert("Warning: Tab change detected. Your test will be auto-submitted on the next attempt!");
+          setHasShownWarning(true);
+        } else if (newCount >= 2) {
+          // Second tab change - auto submit
+          handleSubmit().then(() => {
+            alert("Test submitted automatically due to tab changes. Goodbye!");
+            navigate('/dashboard');
+          });
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [tabChangeCount, isTestSubmitted, handleSubmit, navigate]);
+
+  useEffect(() => {
+    if (!document.hidden && hasShownWarning) {
+      const warningTimeout = setTimeout(() => {
+        setHasShownWarning(false);
+      }, 5000); // Reset warning state after 5 seconds of returning
+
+      return () => clearTimeout(warningTimeout);
+    }
+  }, [document.hidden, hasShownWarning]);
 
   const enterFullScreen = useCallback(() => {
     const elem = document.documentElement;
@@ -676,11 +727,14 @@ const TestInterface = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="flex items-center justify-center h-[calc(100%-80px)] overflow-y-auto max-h-[60vh]">
-            {question.question_image_url ? (
+            {question.question_image ? (
               <img
-                src={question.question_image_url}
+                src={question.question_image}
                 alt="Question"
-                className="max-w-full max-h-[300px] object-contain rounded-lg shadow-md"
+                className="max-w-full max-h-[350px] object-contain rounded-lg shadow-md"
+                onDoubleClick={() => setEnlargedImage({
+                  url: question.question_image,
+                })}
               />
             ) : (
                 <div className="w-full p-4">

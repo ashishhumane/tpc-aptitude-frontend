@@ -67,8 +67,14 @@ const ResultInterface = () => {
         return {
           id: q.id,
           question: q.text,
-          attemptedAnswer: attemptedOption?.text || "Not answered",
-          correctAnswer: correctOption?.text || "No correct answer",
+          attemptedAnswer: {
+            text: attemptedOption?.text || "",
+            image: attemptedOption?.imageLink || null
+          },
+          correctAnswer: {
+            text: correctOption?.text || "",
+            image: correctOption?.imageLink || null
+          },
           isCorrect: attemptedOption ? attemptedOption.isCorrect : false,
         };
       }),
@@ -80,7 +86,7 @@ const ResultInterface = () => {
     const persistedData = localStorage.getItem("persist:root");
     return persistedData ? JSON.parse(JSON.parse(persistedData).auth) : null;
   }, []);
-  console.log(studentData.user);
+  console.log(studentData.user.email);
 
   const downloadResult = async () => {
     if (resultRef.current) {
@@ -125,7 +131,7 @@ const ResultInterface = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
-              <div>Name: {computedResult.student.name}</div>
+              <div>Email: {studentData.user.email}</div>
               <div>Admission Number: {computedResult.student.rollNumber}</div>
               <div>Course: {computedResult.student.course}</div>
               <div>Year: {computedResult.student.year}</div>
@@ -143,7 +149,7 @@ const ResultInterface = () => {
               <div>Test Title: {computedResult.test.title}</div>
               <div>Date: {computedResult.test.date}</div>
               <div>Total Marks: {computedResult.test.totalMarks}</div>
-              <div>Obtained Marks: {computedResult.test.obtainedMarks}</div>
+              <div>Obtained Marks: {computedResult.test.obtainedMarks} out of {testResult.totalQuestions}</div>
               <div>
                 Status:{" "}
                 <Badge
@@ -197,42 +203,26 @@ const ResultInterface = () => {
                         <td className="border p-2 text-left">{q.question}</td>
 
                         {/* Your Answer */}
-                        <td
-                            className={`border p-2 ${
-                                q.isCorrect ? "text-green-600" : "text-red-600"
-                            }`}
-                        >
-                          {typeof q.attemptedAnswer === "string" ? (
-                              q.attemptedAnswer
-                          ) : (
-                              <div>
-                                {q.attemptedAnswer.text}
-                                {q.attemptedAnswer.imageLink && (
-                                    <img
-                                        src={q.attemptedAnswer.imageLink}
-                                        alt="Attempted Answer"
-                                        className="max-w-full h-20 object-contain mt-2"
-                                    />
-                                )}
-                              </div>
+                        <td className={`border p-2 ${q.isCorrect ? "text-green-600" : "text-red-600"}`}>
+                          {q.attemptedAnswer.text }
+                          {q.attemptedAnswer.image && (
+                              <img
+                                  src={q.attemptedAnswer.image}
+                                  alt="Attempted Answer"
+                                  className="max-w-full h-20 object-contain mt-2"
+                              />
                           )}
                         </td>
 
                         {/* Correct Answer */}
                         <td className="border p-2">
-                          {typeof q.correctAnswer === "string" ? (
-                              q.correctAnswer
-                          ) : (
-                              <div>
-                                {q.correctAnswer.text}
-                                {q.correctAnswer.imageLink && (
-                                    <img
-                                        src={q.correctAnswer.imageLink}
-                                        alt="Correct Answer"
-                                        className="max-w-full h-20 object-contain mt-2"
-                                    />
-                                )}
-                              </div>
+                          {q.correctAnswer.text }
+                          {q.correctAnswer.image && (
+                              <img
+                                  src={q.correctAnswer.image}
+                                  alt="Correct Answer"
+                                  className="max-w-full h-20 object-contain mt-2"
+                              />
                           )}
                         </td>
 
