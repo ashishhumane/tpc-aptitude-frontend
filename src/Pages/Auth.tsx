@@ -127,6 +127,21 @@ const Auth = (): React.ReactNode => {
 
   return (
     <div className="flex flex-col h-screen w-full  justify-center items-center  text-white">
+      <div className="mb-8">
+      {/* Light mode logo */}
+      <img
+        src="/TPC-PCE%20TRANSPARENT%20(1).png"
+        alt="TPC Logo"
+        className="h-32 mx-auto block dark:hidden"
+      />
+      
+      {/* Dark mode logo */}
+      <img
+        src="/white%20font%20tpc%20(1).png"
+        alt="TPC Logo"
+        className="h-32 mx-auto hidden dark:block"
+      />
+    </div>
       <h1 className="text-xl font-semibold">Authentication</h1>
       <Tabs
         defaultValue="login"

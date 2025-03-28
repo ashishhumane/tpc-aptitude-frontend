@@ -1,64 +1,63 @@
 "use client";
 
-import { useEffect, useState } from "react";
+// import { useEffect, useState } from "react";
 // import DemoCalendar from "@/components/Calender";
 import { CarouselDemo } from "@/components/Carausel";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import Resources from "@/components/Resources";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card } from "@/components/ui/card";
+// import { ScrollArea } from "@/components/ui/scroll-area";
+// import Resources from "@/components/Resources";
+// import {
+//   Select,
+//   SelectContent,
+//   SelectItem,
+//   SelectTrigger,
+//   SelectValue,
+// } from "@/components/ui/select";
+// import { Card } from "@/components/ui/card";
 
 const Dashboard = () => {
-  interface Test {
-    id: number;
-    name: string;
-  }
+  // interface Test {
+  //   id: number;
+  //   name: string;
+  // }
 
-  interface Student {
-    name: string;
-    totalScore: number;
-  }
+  // interface Student {
+  //   name: string;
+  //   totalScore: number;
+  // }
 
-  const [tests, setTests] = useState<Test[]>([]);
-  const [selectedTest, setSelectedTest] = useState<string>("");
-  const [topStudents, setTopStudents] = useState<Student[]>([]);
-  const [topStudentsError, setTopStudentsError] = useState<string>("");
+  // const [tests, setTests] = useState<Test[]>([]);
+  // const [selectedTest, setSelectedTest] = useState<string>("");
+  // const [topStudents, setTopStudents] = useState<Student[]>([]);
 
-  useEffect(() => {
-    const fetchTests = async () => {
-      try {
-        const response = await fetch(
-          "https://tpc-aptitude-portal-backend.onrender.com/api/test/get-real-tests",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
+  // useEffect(() => {
+  //   const fetchTests = async () => {
+  //     try {
+  //       const response = await fetch(
+  //         "https://tpc-aptitude-portal-backend.onrender.com/api/test/get-real-tests",
+  //         {
+  //           method: "POST",
+  //           headers: {
+  //             "Content-Type": "application/json",
+  //           },
+  //         }
+  //       );
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch tests");
-        }
+  //       if (!response.ok) {
+  //         throw new Error("Failed to fetch tests");
+  //       }
 
-        const data = await response.json();
-        setTests(data);
-        if (data.length > 0) {
-          setSelectedTest(data[0].id);
-        }
-      } catch (error) {
-        console.error("Error fetching tests:", error);
-      }
-    };
+  //       const data = await response.json();
+  //       setTests(data);
+  //       if (data.length > 0) {
+  //         setSelectedTest(data[0].id);
+  //       }
+  //     } catch (error) {
+  //       console.error("Error fetching tests:", error);
+  //     }
+  //   };
 
-    fetchTests();
-  }, []);
+  //   fetchTests();
+  // }, []);
 
   // useEffect(() => {
   //   if (!selectedTest) return;
@@ -99,7 +98,7 @@ const Dashboard = () => {
   //
   //   fetchTopStudents();
   // }, [selectedTest]);
-  console.log(topStudents)
+  // console.log(topStudents)
 
   return (
     <div className="flex flex-col w-full gap-6 p-6">

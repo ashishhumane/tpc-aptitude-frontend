@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import {useSelector} from "react-redux";
+import { useSelector } from "react-redux";
 import {
   Home,
   ClipboardList,
@@ -74,7 +74,7 @@ const adminItems = [
   {
     title: "Qualified students",
     url: "/admin/qualified",
-    icon: ShieldCheck
+    icon: ShieldCheck,
   },
   { title: "Settings", url: "/admin/settings", icon: Settings },
 ];
@@ -86,6 +86,21 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="w-64">
       <SidebarContent>
         {/* User Pages */}
+        <div className="flex items-center justify-center border-b">
+          {/* Light Mode Logo */}
+          <img
+            src="/TPC-PCE TRANSPARENT (1).png"
+            alt="TPC Logo"
+            className="h-32 w-auto object-contain dark:hidden"
+          />
+
+          {/* Dark Mode Logo */}
+          <img
+            src="/white font tpc (1).png"
+            alt="TPC Logo"
+            className="h-32 w-auto object-contain hidden dark:block"
+          />
+        </div>
         <SidebarGroup>
           <SidebarGroupLabel>User Panel</SidebarGroupLabel>
           <SidebarGroupContent>

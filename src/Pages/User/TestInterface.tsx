@@ -1,17 +1,23 @@
-import SyntaxHighlighter from 'react-syntax-highlighter';
+import SyntaxHighlighter from "react-syntax-highlighter";
 import { atomOneDark } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../store/store";
 import { store } from "../../../store/store";
-import {shallowEqual} from "react-redux"
+import { shallowEqual } from "react-redux";
+import { CalculatorIcon } from "lucide-react";
 import {
-  getQuestions ,
-  fetchTestStatus ,
-  submitTest ,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  getQuestions,
+  fetchTestStatus,
+  submitTest,
 } from "../../../store/Actions/testActions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Toaster } from "@/components/ui/sonner.tsx"
+import { Toaster } from "@/components/ui/sonner.tsx";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -28,6 +34,7 @@ import { useParams, useNavigate } from "react-router-dom";
 
 import { decrementTime } from "../../../store/Slices/testSlices";
 import axios from "axios";
+import ScientificCalculator from "@/components/Layout/Calculator";
 
 const TestInterface = () => {
   const [enlargedImage, setEnlargedImage] = useState<{
@@ -39,23 +46,28 @@ const TestInterface = () => {
   const escapeAttemptRef = useRef(0);
   const [tabChangeCount, setTabChangeCount] = useState(0);
   const [hasShownWarning, setHasShownWarning] = useState(false);
-
-
+  const [isNavOpen, setIsNavOpen] = useState(false);
+  const [showCalculator, setShowCalculator] = useState(false);
   const navigate = useNavigate();
-  const { questions, testDetails, loading, error, remainingTime, isTestSubmitted } = useSelector(
-      (state: RootState) => ({
-        questions: state.test.questions,
-        testDetails: state.test.testDetails,
-        loading: state.test.loading,
-        error: state.test.error,
-        remainingTime: state.test.remainingTime,
-        isTestSubmitted: state.test.isTestSubmitted,
-      }),
-      shallowEqual // Add shallow equality check
+  const {
+    questions,
+    testDetails,
+    loading,
+    error,
+    remainingTime,
+    isTestSubmitted,
+  } = useSelector(
+    (state: RootState) => ({
+      questions: state.test.questions,
+      testDetails: state.test.testDetails,
+      loading: state.test.loading,
+      error: state.test.error,
+      remainingTime: state.test.remainingTime,
+      isTestSubmitted: state.test.isTestSubmitted,
+    }),
+    shallowEqual // Add shallow equality check
   );
   const persistedData = localStorage.getItem("persist:root");
-
-
 
   const studentId = persistedData
     ? JSON.parse(JSON.parse(persistedData).auth).user.userId
@@ -90,7 +102,7 @@ const TestInterface = () => {
       }
     };
 
-    loadTestContent().then(r => console.log(r));
+    loadTestContent().then((r) => console.log(r));
   }, [dispatch, testId, studentId]);
 
   // Modify the initialization useEffect to handle missing testDetails
@@ -117,7 +129,7 @@ const TestInterface = () => {
         }
       }
     };
-    initializeTest().then(r => console.log(r));
+    initializeTest().then((r) => console.log(r));
   }, [dispatch, testId, studentId, testDetails]);
 
   useEffect(() => {
@@ -136,18 +148,20 @@ const TestInterface = () => {
 
         // Correct axios call structure
         await axios.post(
-            'http://new-portal-loadbalancer-1041373362.ap-south-1.elb.amazonaws.com/api/test/handle-test', // Use correct endpoint
-            { // Request body
-              studentId,
-              testId: Number(testId),
-              remainingTime: currentTime,
-              isSubmitted: false,
+          "http://new-portal-loadbalancer-1041373362.ap-south-1.elb.amazonaws.com/api/test/handle-test", // Use correct endpoint
+          {
+            // Request body
+            studentId,
+            testId: Number(testId),
+            remainingTime: currentTime,
+            isSubmitted: false,
+          },
+          {
+            // Config object
+            headers: {
+              Authorization: `Bearer ${token}`, // Add Bearer prefix
             },
-            { // Config object
-              headers: {
-                Authorization: `Bearer ${token}`, // Add Bearer prefix
-              },
-            }
+          }
         );
         console.log(`Synced ${currentTime} with server`);
       } catch (error) {
@@ -192,103 +206,118 @@ const TestInterface = () => {
   };
 
   // Handle test submission
-  const handleSubmit = useCallback(async (isForced = false) => {
-    if (isTestSubmitted) return;
+  const handleSubmit = useCallback(
+    async (isForced = false) => {
+      if (isTestSubmitted) return;
 
-    try {
-      const timeTaken =
-        (testDetails?.time_duration || 0) * 60 - (remainingTime ?? 0);
+      try {
+        let finalAnswers = { ...answers };
+        const timeTaken =
+          (testDetails?.time_duration || 0) * 60 - (remainingTime ?? 0);
 
-      if (isForced) {
-        navigate('/dashboard');
-        alert("Test submitted Goodbye!");
-      }
-
-      // Transform answers
-      const responses = Object.entries(answers).reduce(
-        (acc, [index, optionId]) => {
-          const question = questions[Number(index)];
-          if (question) {
-            acc[question.question_id] = optionId;
+        if (isForced) {
+          const autoAnswers = { ...answers };
+        questions.forEach((question, index) => {
+          if (!(index in autoAnswers)) {
+            const randomOptionIndex = Math.floor(
+              Math.random() * question.options.length
+            );
+            autoAnswers[index] = question.options[randomOptionIndex].option_id;
           }
-          return acc;
-        },
-        {} as Record<number, number>
-      );
+        });
+        finalAnswers = autoAnswers;
+        setAnswers(autoAnswers);
+          navigate("/dashboard");
+          alert("Test submitted automatically Goodbye 🫡");
+        }
 
-      const payload = {
-        test_id: Number(testId),
-        answers: responses,
-      };
-
-      console.log("Submitting Test Payload:", payload);
-
-      // 🚀 Check API call success
-      const submitResponse = await dispatch(submitTest(payload)).unwrap();
-      console.log("Test Submission Successful:", submitResponse);
-
-      // 🚀 Handle fetch test status separately
-      const testStatusResponse = await dispatch(
-        fetchTestStatus({
-          studentId,
-          testId: Number(testId),
-          isSubmitted: true,
-        })
-      ).unwrap();
-
-      console.log("Test Status Updated:", testStatusResponse);
-
-      // Navigate to results or dashboard
-      navigate(
-        testDetails?.quickEvaluation ? `/result/${testId}` : "/dashboard",
-        {
-          state: testDetails?.quickEvaluation
-            ? {
-              testId: Number(testId),
-              answers,
-              remainingTime: remainingTime ?? 0,
-              timeTaken,
-              testDetails,
-              questions,
+        // Transform answers
+        const responses = Object.entries(finalAnswers).reduce(
+          (acc, [index, optionId]) => {
+            const question = questions[Number(index)];
+            if (question) {
+              acc[question.question_id] = optionId;
             }
-            : undefined,
-        }
-      );
-    } catch (err) {
-      console.error("Submission failed:", err);
+            return acc;
+          },
+          {} as Record<number, number>
+        );
 
-      if (err instanceof Error) {
-        if ((err as any).response) {
-          console.error("Server Response:", {
-            data: (err as any).response.data,
-            status: (err as any).response.status,
-            headers: (err as any).response.headers,
-          });
-          console.log(
-            (err as any).response.data.message || "Submission failed"
-          );
+        const payload = {
+          test_id: Number(testId),
+          answers: responses,
+        };
+
+        console.log("Submitting Test Payload:", payload);
+
+        // 🚀 Check API call success
+        const submitResponse = await dispatch(submitTest(payload)).unwrap();
+        console.log("Test Submission Successful:", submitResponse);
+
+        // 🚀 Handle fetch test status separately
+        const testStatusResponse = await dispatch(
+          fetchTestStatus({
+            studentId,
+            testId: Number(testId),
+            isSubmitted: true,
+          })
+        ).unwrap();
+
+        console.log("Test Status Updated:", testStatusResponse);
+
+        // Navigate to results or dashboard
+        navigate(
+          testDetails?.quickEvaluation ? `/result/${testId}` : "/dashboard",
+          {
+            state: testDetails?.quickEvaluation
+              ? {
+                  testId: Number(testId),
+                  answers,
+                  remainingTime: remainingTime ?? 0,
+                  timeTaken,
+                  testDetails,
+                  questions,
+                }
+              : undefined,
+          }
+        );
+      } catch (err) {
+        console.error("Submission failed:", err);
+
+        if (err instanceof Error) {
+          if ((err as any).response) {
+            console.error("Server Response:", {
+              data: (err as any).response.data,
+              status: (err as any).response.status,
+              headers: (err as any).response.headers,
+            });
+            console.log(
+              (err as any).response.data.message || "Submission failed"
+            );
+          } else {
+            console.error("Error Message:", err.message);
+          }
         } else {
-          console.error("Error Message:", err.message);
+          console.error("Unknown error:", err);
         }
-      } else {
-        console.error("Unknown error:", err);
       }
-    }
-  }, [
-    isTestSubmitted,
-    dispatch,
-    testId,
-    studentId,
-    answers,
-    remainingTime,
-    testDetails,
-    navigate,
-    questions,
-  ]);
+    },
+    [
+      isTestSubmitted,
+      dispatch,
+      testId,
+      studentId,
+      answers,
+      remainingTime,
+      testDetails,
+      navigate,
+      questions,
+    ]
+  );
 
   useEffect(() => {
     if (remainingTime === 0 && !isTestSubmitted) {
-      handleSubmit(true).then(r => console.log(r));
+      handleSubmit(true).then((r) => console.log(r));
     }
   }, [remainingTime, isTestSubmitted, handleSubmit]);
 
@@ -301,22 +330,24 @@ const TestInterface = () => {
         if (newCount === 1) {
           // First tab change
           setCurrentQuestionIndex(0);
-          alert("Warning: Tab change detected. Your test will be auto-submitted on the next attempt!");
+          alert(
+            "Warning: Tab change detected. Your test will be auto-submitted on the next attempt!"
+          );
           setHasShownWarning(true);
         } else if (newCount >= 2) {
           // Second tab change - auto submit
-          handleSubmit().then(() => {
-            alert("Test submitted automatically due to tab changes. Goodbye!");
-            navigate('/dashboard');
+          handleSubmit(true).then(() => {
+            alert("Test submitted automatically due to tab changes. Goodbye!🫡");
+            navigate("/dashboard");
           });
         }
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [tabChangeCount, isTestSubmitted, handleSubmit, navigate]);
 
@@ -334,12 +365,13 @@ const TestInterface = () => {
     const elem = document.documentElement;
     if (!fullScreenRef.current) {
       if (elem.requestFullscreen) {
-        elem.requestFullscreen()
+        elem
+          .requestFullscreen()
           .then(() => {
             fullScreenRef.current = true;
             escapeAttemptRef.current = 0;
           })
-          .catch(err => {
+          .catch((err) => {
             console.error(`Error enabling fullscreen: ${err.message}`);
           });
       }
@@ -348,47 +380,52 @@ const TestInterface = () => {
 
   const exitFullScreen = useCallback(() => {
     if (document.exitFullscreen && fullScreenRef.current && isTestSubmitted) {
-      document.exitFullscreen()
+      document
+        .exitFullscreen()
         .then(() => {
           fullScreenRef.current = false;
         })
-        .catch(err => {
+        .catch((err) => {
           console.error(`Error exiting fullscreen: ${err.message}`);
         });
     }
   }, [isTestSubmitted]);
 
-  const blockEscapeKey = useCallback((e: KeyboardEvent) => {
-    if (e.key === "Escape" && !isTestSubmitted) {
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
+  const blockEscapeKey = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !isTestSubmitted) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
 
-      // Re-enter fullscreen if somehow exited
-      if (!document.fullscreenElement) {
-        enterFullScreen();
-      }
+        // Re-enter fullscreen if somehow exited
+        if (!document.fullscreenElement) {
+          enterFullScreen();
+        }
 
-      // Show warning after multiple attempts
-      escapeAttemptRef.current += 1;
-      if (escapeAttemptRef.current > 2) {
-        alert("The Escape key is disabled during the test. Please complete the test first.");
+        // Show warning after multiple attempts
+        escapeAttemptRef.current += 1;
+        if (escapeAttemptRef.current > 2) {
+          alert(
+            "The Escape key is disabled during the test. Please complete the test first."
+          );
+        }
+        return false;
       }
-      return false;
-    }
-  }, [enterFullScreen, isTestSubmitted]);
+    },
+    [enterFullScreen, isTestSubmitted]
+  );
 
   useEffect(() => {
     // Use capture phase and make non-passive to ensure we catch it first
     const options = { capture: true, passive: false };
 
-    window.addEventListener('keydown', blockEscapeKey, options);
+    window.addEventListener("keydown", blockEscapeKey, options);
 
     return () => {
-      window.removeEventListener('keydown', blockEscapeKey, options);
+      window.removeEventListener("keydown", blockEscapeKey, options);
     };
   }, [blockEscapeKey]);
-
 
   useEffect(() => {
     enterFullScreen();
@@ -413,7 +450,6 @@ const TestInterface = () => {
 
     // Block keyboard shortcuts
     if (e instanceof KeyboardEvent) {
-
       if (e.key === "Escape") {
         e.preventDefault();
         e.stopPropagation();
@@ -421,8 +457,16 @@ const TestInterface = () => {
       }
 
       const forbiddenKeys = [
-        "F12", "F8", "F7", "ContextMenu",
-        "c", "C", "I", "i", "J", "j"
+        "F12",
+        "F8",
+        "F7",
+        "ContextMenu",
+        "c",
+        "C",
+        "I",
+        "i",
+        "J",
+        "j",
       ];
       const ctrlShiftCombos = ["I", "C", "J", "j", "i", "c"];
 
@@ -460,11 +504,13 @@ const TestInterface = () => {
     window.addEventListener("keydown", disableInspect);
 
     // Block keyboard events on input elements
-    const inputElements = document.querySelectorAll('input, textarea, [contenteditable="true"]');
-    inputElements.forEach(el => {
+    const inputElements = document.querySelectorAll(
+      'input, textarea, [contenteditable="true"]'
+    );
+    inputElements.forEach((el) => {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-expect-error
-      el.addEventListener('keydown', disableInspect);
+      el.addEventListener("keydown", disableInspect);
     });
 
     // Cleanup function
@@ -472,10 +518,10 @@ const TestInterface = () => {
       window.removeEventListener("contextmenu", disableInspect);
       window.removeEventListener("keydown", disableInspect);
 
-      inputElements.forEach(el => {
+      inputElements.forEach((el) => {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-expect-error
-        el.removeEventListener('keydown', disableInspect);
+        el.removeEventListener("keydown", disableInspect);
       });
     };
   }, [disableInspect]);
@@ -484,15 +530,16 @@ const TestInterface = () => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (!isTestSubmitted) {
         e.preventDefault();
-        alert("Are you sure you want to leave? Your test progress may be lost."); // Optional alert
+        alert(
+          "Are you sure you want to leave? Your test progress may be lost."
+        ); // Optional alert
         e.preventDefault(); // Ensures the event is triggered
       }
     };
 
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener("beforeunload", handleBeforeUnload);
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, [isTestSubmitted]);
 
@@ -504,7 +551,7 @@ const TestInterface = () => {
         e.preventDefault();
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-expect-error
-        Toaster('Right-click is disabled during the test.');
+        Toaster("Right-click is disabled during the test.");
         return false;
       }
 
@@ -544,7 +591,6 @@ const TestInterface = () => {
       }
     };
 
-
     // Add all event listeners
     window.addEventListener("contextmenu", disableInspect);
     window.addEventListener("keydown", disableInspect);
@@ -555,11 +601,10 @@ const TestInterface = () => {
     };
   }, [handleSubmit, testDetails?.strictMode]); // Add dependencies
 
-
   // Auto-submit when time reaches 0
   useEffect(() => {
     if (remainingTime === 0 && !isTestSubmitted) {
-      handleSubmit().then(r => console.log(r));
+      handleSubmit().then((r) => console.log(r));
     }
   }, [remainingTime, isTestSubmitted, handleSubmit]);
 
@@ -589,63 +634,69 @@ const TestInterface = () => {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   }, []);
   // Loading states
-  if (loading) return (
-    <div className="w-full p-6 space-y-6">
-      {/* Progress Bar Skeleton */}
-      <div className="h-2.5 bg-gray-200 rounded-full dark:bg-zinc-700 w-full animate-pulse"></div>
+  if (loading)
+    return (
+      <div className="w-full p-6 space-y-6 relative">
+        {/* Progress Bar Skeleton */}
+        <div className="h-2.5 bg-gray-200 rounded-full dark:bg-zinc-700 w-full animate-pulse"></div>
 
-      {/* Header Skeleton */}
-      <div className="flex flex-col md:flex-row justify-between items-start gap-4 p-4 bg-gray-100 dark:bg-zinc-950 rounded-md">
-        <div className="h-6 bg-gray-300 rounded-md dark:bg-zinc-700 w-1/4"></div>
-        <div className="flex gap-4">
-          <div className="h-8 w-24 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
-          <div className="h-8 w-24 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
-        </div>
-      </div>
-
-      {/* Question Navigation Skeleton */}
-      <div className="grid grid-cols-5 md:grid-cols-10 gap-2 p-4">
-        {[...Array(10)].map((_, i) => (
-          <div key={i} className="h-8 w-8 bg-gray-200 rounded-full dark:bg-zinc-700 animate-pulse"></div>
-        ))}
-      </div>
-
-      {/* Separator Skeleton */}
-      <div className="h-px bg-gray-200 dark:bg-zinc-700 w-full"></div>
-
-      {/* Main Content Skeleton */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Question Card Skeleton */}
-        <div className="h-[400px] bg-gray-100 dark:bg-zinc-900 rounded-xl p-6">
-          <div className="h-6 bg-gray-300 rounded-md dark:bg-zinc-700 w-1/3 mb-4"></div>
-          <div className="h-64 bg-gray-200 rounded-lg dark:bg-zinc-800 animate-pulse"></div>
+        {/* Header Skeleton */}
+        <div className="flex flex-col md:flex-row justify-between items-start gap-4 p-4 bg-gray-100 dark:bg-zinc-950 rounded-md">
+          <div className="h-6 bg-gray-300 rounded-md dark:bg-zinc-700 w-1/4"></div>
+          <div className="flex gap-4">
+            <div className="h-8 w-24 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
+            <div className="h-8 w-24 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
+          </div>
         </div>
 
-        {/* Options Card Skeleton */}
-        <div className="h-[400px] bg-gray-100 dark:bg-zinc-900 rounded-xl p-6">
-          <div className="h-6 bg-gray-300 rounded-md dark:bg-zinc-700 w-1/3 mb-4"></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-24 bg-gray-200 rounded-md dark:bg-zinc-800 animate-pulse"></div>
-            ))}
+        {/* Question Navigation Skeleton */}
+        <div className="grid grid-cols-5 md:grid-cols-10 gap-2 p-4">
+          {[...Array(10)].map((_, i) => (
+            <div
+              key={i}
+              className="h-8 w-8 bg-gray-200 rounded-full dark:bg-zinc-700 animate-pulse"
+            ></div>
+          ))}
+        </div>
+
+        {/* Separator Skeleton */}
+        <div className="h-px bg-gray-200 dark:bg-zinc-700 w-full"></div>
+
+        {/* Main Content Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Question Card Skeleton */}
+          <div className="h-[400px] bg-gray-100 dark:bg-zinc-900 rounded-xl p-6">
+            <div className="h-6 bg-gray-300 rounded-md dark:bg-zinc-700 w-1/3 mb-4"></div>
+            <div className="h-64 bg-gray-200 rounded-lg dark:bg-zinc-800 animate-pulse"></div>
+          </div>
+
+          {/* Options Card Skeleton */}
+          <div className="h-[400px] bg-gray-100 dark:bg-zinc-900 rounded-xl p-6">
+            <div className="h-6 bg-gray-300 rounded-md dark:bg-zinc-700 w-1/3 mb-4"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <div
+                  key={i}
+                  className="h-24 bg-gray-200 rounded-md dark:bg-zinc-800 animate-pulse"
+                ></div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation Controls Skeleton */}
+        <div className="flex justify-between items-center mt-6">
+          <div className="flex gap-2">
+            <div className="h-10 w-24 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
+            <div className="h-10 w-36 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="h-6 w-20 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
+            <div className="h-10 w-32 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
           </div>
         </div>
       </div>
-
-      {/* Navigation Controls Skeleton */}
-      <div className="flex justify-between items-center mt-6">
-        <div className="flex gap-2">
-          <div className="h-10 w-24 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
-          <div className="h-10 w-36 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="h-6 w-20 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
-          <div className="h-10 w-32 bg-gray-300 rounded-md dark:bg-zinc-700"></div>
-        </div>
-      </div>
-
-    </div>
-  );
+    );
 
   if (error) {
     return (
@@ -685,35 +736,86 @@ const TestInterface = () => {
           </Badge>
           <Badge
             variant="destructive"
-            className="flex items-center gap-2 animate-pulse"
+            className="flex items-center gap-2 p-4 animate-pulse"
           >
             <Clock className="w-4 h-4" />
             {formatTime(remainingTime ?? 0)}
           </Badge>
+          <Button
+            variant="outline"
+            onClick={() => setShowCalculator(!showCalculator)}
+            className="gap-2"
+          >
+            <CalculatorIcon className="w-4 h-4" />
+            Calculator
+          </Button>
         </div>
       </div>
 
+      {showCalculator && (
+        <div className="fixed right-4 top-24 z-[1000]">
+          <ScientificCalculator />
+        </div>
+      )}
+
       {/* Question Navigation Grid */}
-      <div className="grid grid-cols-5 md:grid-cols-10 gap-2 p-4">
-        {questions.map((_, index) => (
-          <Button
-            key={index}
-            variant={currentQuestionIndex === index ? "default" : "outline"}
-            size="sm"
-            className={`h-8 w-8 p-0 rounded-full transition-all relative ${answers[index]
-                ? "bg-green-400 hover:bg-green-200 dark:bg-green-600 dark:hover:bg-green-800"
-                : ""
-              }`}
-            onClick={() => setCurrentQuestionIndex(index)}
+      <div className="relative">
+        <Popover open={isNavOpen} onOpenChange={setIsNavOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className="w-12 h-12 rounded-full relative transition-all hover:scale-105"
+              onClick={() => setIsNavOpen(!isNavOpen)}
+            >
+              {currentQuestionIndex + 1}
+              {markedQuestions.has(currentQuestionIndex) && (
+                <Flag className="w-4 h-4 text-red-600 fill-red-600 absolute -top-1 -right-1" />
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="start"
+            className="w-[480px] p-4 transition-all duration-300 ease-in-out"
           >
-            {index + 1}
-            {markedQuestions.has(index) && (
-              <div className="absolute -top-1 -right-1">
-                <Flag className="w-4 h-4 text-red-600 fill-red-600" />
+            <div className="grid grid-cols-8 gap-2 max-h-[400px] overflow-y-auto">
+              {questions.map((_, index) => (
+                <Button
+                  key={index}
+                  variant={
+                    currentQuestionIndex === index ? "default" : "outline"
+                  }
+                  size="sm"
+                  className={`h-8 w-8 p-0 rounded-full transition-all relative ${
+                    answers[index]
+                      ? "bg-green-400 hover:bg-green-200 dark:bg-green-600 dark:hover:bg-green-800"
+                      : ""
+                  }`}
+                  onClick={() => {
+                    setCurrentQuestionIndex(index);
+                    setIsNavOpen(false); // Close the popover on selection
+                  }}
+                >
+                  {index + 1}
+                  {markedQuestions.has(index) && (
+                    <div className="absolute -top-1 -right-1">
+                      <Flag className="w-3 h-3 text-red-600 fill-red-600" />
+                    </div>
+                  )}
+                </Button>
+              ))}
+            </div>
+            <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-3 h-3 rounded-full bg-green-400 dark:bg-green-600" />
+                <span>Answered</span>
               </div>
-            )}
-          </Button>
-        ))}
+              <div className="flex items-center gap-2">
+                <Flag className="w-3 h-3 text-red-600 fill-red-600" />
+                <span>Marked for review</span>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
       <Separator className="my-4" />
@@ -727,39 +829,46 @@ const TestInterface = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="flex items-center justify-center h-[calc(100%-80px)] overflow-y-auto max-h-[60vh]">
-            {question.question_image ? (
-              <img
-                src={question.question_image}
-                alt="Question"
-                className="max-w-full max-h-[350px] object-contain rounded-lg shadow-md"
-                onDoubleClick={() => setEnlargedImage({
-                  url: question.question_image,
-                })}
-              />
-            ) : (
+            <div className="flex flex-col items-center gap-4 w-full">
+              {question.question_image && (
+                <img
+                  src={question.question_image}
+                  alt="Question"
+                  className="max-w-full max-h-[350px] object-contain rounded-lg shadow-md"
+                  onDoubleClick={() =>
+                    setEnlargedImage({
+                      url: question.question_image,
+                    })
+                  }
+                />
+              )}
+              {question.question_text && (
                 <div className="w-full p-4">
-                  {question.question_text.startsWith('```') ? (
-                      <SyntaxHighlighter
-                          language="javascript"
-                          style={atomOneDark}
-                          className="rounded-lg p-4 text-sm max-h-[500px] overflow-y-auto"
-                      >
-                        {question.question_text.replace(/```\w*/g, '')}
-                      </SyntaxHighlighter>
+                  {question.question_text.startsWith("```") ? (
+                    <SyntaxHighlighter
+                      language="javascript"
+                      style={atomOneDark}
+                      className="rounded-lg p-4 text-sm max-h-[500px] overflow-y-auto"
+                    >
+                      {question.question_text.replace(/```\w*/g, "")}
+                    </SyntaxHighlighter>
                   ) : (
-                      <pre className="text-lg whitespace-pre-wrap font-sans">
-          {question.question_text}
-        </pre>
+                    <pre className="text-lg whitespace-pre-wrap font-sans">
+                      {question.question_text}
+                    </pre>
                   )}
                 </div>
-            )}
+              )}
+            </div>
           </CardContent>
         </Card>
 
         <Card className="h-full min-h-[400px] transition-all duration-300">
           <CardHeader>
             <CardTitle>Select your answer</CardTitle>
-           <p className="text-[10px] text-gray-400">*Double tap on options to focus the image</p>
+            <p className="text-[10px] text-gray-400">
+              *Double tap on options to focus the image
+            </p>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {question.options.map((option: any) => (
@@ -786,44 +895,46 @@ const TestInterface = () => {
                     };
                   });
                 }}
-                className="h-24 flex flex-col items-center justify-center relative overflow-hidden group"
+                className="h-24 flex flex-col items-center justify-center relative overflow-x-auto group min-w-[200px]"
               >
                 {answers[currentQuestionIndex] === option.option_id && (
                   <Check className="w-6 h-6 absolute top-2 right-2 text-white dark:text-black" />
                 )}
                 {option.option_image_url ? (
-                    <div className="relative w-full h-full">
-                      <img
-                          src={option.option_image_url}
-                          alt="Option"
-                          className="w-full h-full object-contain p-2 cursor-zoom-in"
-                          onDoubleClick={() => setEnlargedImage({
-                            url: option.option_image_url,
-                            optionText: option.option_text
-                          })}
-                      />
-                      {option.option_text ? (
-                          <div className="w-full h-full overflow-y-auto p-2">
-                            {option.option_text.startsWith('```') ? (
-                                <SyntaxHighlighter
-                                    language="javascript"
-                                    style={atomOneDark}
-                                    className="rounded-lg p-2 text-xs max-h-[200px]"
-                                >
-                                  {option.option_text.replace(/```\w*/g, '')}
-                                </SyntaxHighlighter>
-                            ) : (
-                                <pre className="whitespace-pre-wrap text-sm max-h-[200px] overflow-y-auto font-mono">
-        {option.option_text}
-      </pre>
-                            )}
-                          </div>
-                      ) : null}
-                    </div>
+                  <div className="relative w-full h-full">
+                    <img
+                      src={option.option_image_url}
+                      alt="Option"
+                      className="w-full h-full object-contain p-2 cursor-zoom-in"
+                      onDoubleClick={() =>
+                        setEnlargedImage({
+                          url: option.option_image_url,
+                          optionText: option.option_text,
+                        })
+                      }
+                    />
+                    {option.option_text ? (
+                      <div className="w-full h-full overflow-y-auto p-2">
+                        {option.option_text.startsWith("```") ? (
+                          <SyntaxHighlighter
+                            language="javascript"
+                            style={atomOneDark}
+                            className="rounded-lg p-2 text-xs max-h-[200px]"
+                          >
+                            {option.option_text.replace(/```\w*/g, "")}
+                          </SyntaxHighlighter>
+                        ) : (
+                          <pre className="whitespace-pre-wrap text-sm max-h-[200px] overflow-y-auto font-mono">
+                            {option.option_text}
+                          </pre>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
                 ) : (
-                    <span className="text-center break-words px-4">
-          {option.option_text}
-        </span>
+                  <span className="text-center break-words px-4 whitespace-nowrap overflow-x-auto w-full">
+                    {option.option_text}
+                  </span>
                 )}
               </Button>
             ))}
@@ -869,9 +980,13 @@ const TestInterface = () => {
               onClick={
                 testDetails.quickEvaluation
                   ? () => {
-                    handlePracticeSubmit(testDetails.test_id).then(r => console.log(r));
-                  }
-                  : handleSubmit
+                      handlePracticeSubmit(testDetails.test_id).then((r) =>
+                        console.log(r)
+                      );
+                    }
+                  : () => {
+                      handleSubmit().then((r) => console.log(r));
+                    }
               }
               className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
             >
@@ -890,23 +1005,23 @@ const TestInterface = () => {
         </div>
       </div>
       {enlargedImage && (
-          <div
-              className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center cursor-zoom-out"
-              onClick={() => setEnlargedImage(null)}
-          >
-            <div className="max-w-[90vw] max-h-[90vh] flex flex-col items-center">
-              <img
-                  src={enlargedImage.url}
-                  alt="Enlarged option"
-                  className="object-contain max-h-[80vh]"
-              />
-              {enlargedImage.optionText && (
-                  <p className="mt-4 text-lg text-white bg-black/50 px-4 py-2 rounded-lg">
-                    {enlargedImage.optionText}
-                  </p>
-              )}
-            </div>
+        <div
+          className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center cursor-zoom-out"
+          onClick={() => setEnlargedImage(null)}
+        >
+          <div className="max-w-[90vw] max-h-[90vh] flex flex-col items-center">
+            <img
+              src={enlargedImage.url}
+              alt="Enlarged option"
+              className="object-contain max-h-[80vh]"
+            />
+            {enlargedImage.optionText && (
+              <p className="mt-4 text-lg text-white bg-black/50 px-4 py-2 rounded-lg">
+                {enlargedImage.optionText}
+              </p>
+            )}
           </div>
+        </div>
       )}
     </div>
   );
