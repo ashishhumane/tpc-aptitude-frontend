@@ -96,8 +96,8 @@ const testSlice = createSlice({
       })
       .addCase(getQuestions.fulfilled, (state, action) => {
         state.loading = false;
-        state.questions = action.payload.questions;
-        state.testDetails = action.payload.testDetails;
+        state.questions = action.payload.test?.questions || action.payload.questions;
+    state.testDetails = action.payload.test || action.payload;
       })
       .addCase(getQuestions.rejected, (state, action) => {
         state.loading = false;
