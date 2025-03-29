@@ -69,6 +69,17 @@ const TestInterface = () => {
   );
   const persistedData = localStorage.getItem("persist:root");
 
+  const blinkStyle = `
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+.animate-blink {
+  animation: blink 1.5s infinite;
+}
+`;
+
   const studentId = persistedData
     ? JSON.parse(JSON.parse(persistedData).auth).user.userId
     : null;
@@ -760,18 +771,27 @@ const TestInterface = () => {
 
       {/* Question Navigation Grid */}
       <div className="relative">
+      <style>{blinkStyle}</style>
         <Popover open={isNavOpen} onOpenChange={setIsNavOpen}>
           <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className="w-12 h-12 rounded-full relative transition-all hover:scale-105"
-              onClick={() => setIsNavOpen(!isNavOpen)}
-            >
-              {currentQuestionIndex + 1}
-              {markedQuestions.has(currentQuestionIndex) && (
-                <Flag className="w-4 h-4 text-red-600 fill-red-600 absolute -top-1 -right-1" />
-              )}
-            </Button>
+          <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          className="w-12 h-12 rounded-full relative transition-all hover:scale-105"
+          onClick={() => setIsNavOpen(!isNavOpen)}
+        >
+          {currentQuestionIndex + 1}
+          {markedQuestions.has(currentQuestionIndex) && (
+            <Flag className="w-4 h-4 text-red-600 fill-red-600 absolute -top-1 -right-1" />
+          )}
+        </Button>
+        {!isNavOpen && (
+          <span className="text-sm text-muted-foreground animate-blink font-medium">
+            Click here to navigate through test
+          </span>
+        )}
+      </div>
+
           </PopoverTrigger>
           <PopoverContent
             align="start"
