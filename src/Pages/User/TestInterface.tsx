@@ -1008,7 +1008,7 @@ const TestInterface = () => {
                       handleSubmit().then((r) => console.log(r));
                     }
               }
-              className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
+              className="w-full sm:w-auto bg-red-600 hover:bg-green-700"
             >
               Submit Test
             </Button>
