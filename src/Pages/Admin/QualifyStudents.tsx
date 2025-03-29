@@ -16,10 +16,20 @@ const QualifyStudents = () => {
     const [limit, setLimit] = useState<number>(10);
     const [testId, setTestId] = useState<number>(1);
 
-    // Sort students by score in descending order
+    // Process students to get unique entries with highest scores
     const sortedStudents = useMemo(() => {
-        return [...topStudents].sort((a, b) => b.score - a.score);
-    }, [topStudents]);
+        const uniqueStudents = topStudents.reduce((acc, current) => {
+            const existing = acc.get(current.student.id);
+            if (!existing || current.score > existing.score) {
+                acc.set(current.student.id, current);
+            }
+            return acc;
+        }, new Map<number, typeof topStudents[0]>());
+
+        return Array.from(uniqueStudents.values())
+            .sort((a, b) => b.score - a.score)
+            .slice(0, limit);
+    }, [topStudents, limit]);
 
     const fetchTopStudents = () => {
         dispatch(getTopNStudents({ testId, limit }));
@@ -27,54 +37,80 @@ const QualifyStudents = () => {
 
     const exportToPDF = async () => {
         const pdfDoc = await PDFDocument.create();
-        const page = pdfDoc.addPage();
-        const { width, height } = page.getSize();
-
+        const pageHeight = 792; // Standard A4 height (11 inches * 72 dpi)
+        const rowHeight = 20;
+        const margin = 50;
+        
         // Set up fonts
         const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
         const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-
-        // Add title
-        page.drawText(`Top ${limit} Students - Test ${testId}`, {
-            x: 50,
-            y: height - 50,
+    
+        let currentPage = pdfDoc.addPage();
+        let currentY = pageHeight - margin - 30; // Initial Y position
+        
+        // Add main title (only on first page)
+        currentPage.drawText(`Top ${limit} Students - Test ${testId}`, {
+            x: margin,
+            y: currentY,
             font: boldFont,
             size: 18,
             color: rgb(0, 0, 0),
         });
-
+        currentY -= 40;
+    
         // Table parameters
-        const startY = height - 80;
-        const rowHeight = 20;
-        const colWidths = [60, 200, 200, 80]; // Adjusted column widths
+        const colWidths = [60, 200, 200, 80];
         const headers = ["Rank", "Name", "Email", "Score"];
-
-        // Draw table headers
-        let x = 50;
+        let isFirstPage = true;
+    
+        // Draw headers on first page
+        let x = margin;
         headers.forEach((header, index) => {
-            page.drawText(header, {
+            currentPage.drawText(header, {
                 x,
-                y: startY,
+                y: currentY,
                 font: boldFont,
                 size: 12,
                 color: rgb(0, 0, 0),
             });
             x += colWidths[index];
         });
-
+        currentY -= rowHeight + 5;
+    
         // Draw table rows
-        let currentY = startY - rowHeight;
         sortedStudents.forEach((student, index) => {
+            // Check if need new page (leave space for header)
+            if (currentY < margin + 50) {
+                currentPage = pdfDoc.addPage();
+                currentY = pageHeight - margin - 30;
+                isFirstPage = false;
+    
+                // Draw headers on new page
+                x = margin;
+                headers.forEach((header, index) => {
+                    currentPage.drawText(header, {
+                        x,
+                        y: currentY,
+                        font: boldFont,
+                        size: 12,
+                        color: rgb(0, 0, 0),
+                    });
+                    x += colWidths[index];
+                });
+                currentY -= rowHeight + 5;
+            }
+    
             const rowData = [
                 `${index + 1}`,
                 `${student.student.firstName} ${student.student.lastName}`,
                 student.student.email,
                 `${student.score}/${student.totalQuestions}`
             ];
-
-            x = 50;
+    
+            // Draw row content
+            x = margin;
             rowData.forEach((text, colIndex) => {
-                page.drawText(text, {
+                currentPage.drawText(text, {
                     x,
                     y: currentY,
                     font,
@@ -84,18 +120,18 @@ const QualifyStudents = () => {
                 });
                 x += colWidths[colIndex];
             });
-
+    
             // Draw horizontal line
-            page.drawLine({
-                start: { x: 50, y: currentY - 5 },
-                end: { x: width - 50, y: currentY - 5 },
+            currentPage.drawLine({
+                start: { x: margin, y: currentY - 5 },
+                end: { x: currentPage.getWidth() - margin, y: currentY - 5 },
                 thickness: 0.5,
                 color: rgb(0, 0, 0),
             });
-
+    
             currentY -= rowHeight;
         });
-
+    
         // Save PDF
         const pdfBytes = await pdfDoc.save();
         const blob = new Blob([pdfBytes], { type: "application/pdf" });
@@ -148,44 +184,43 @@ const QualifyStudents = () => {
                     Error: {typeof error === 'string' ? error : error.message}
                 </div>
             )}
-            <div id="pdf-content" className="pdf-export-content">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Top Performing Students</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {isLoading ? (
-                            <div className="space-y-4">
-                                {[...Array(limit)].map((_, i) => (
-                                    <Skeleton key={i} className="h-12 w-full" />
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="space-y-4">
-                                {sortedStudents.map((student, index) => (
-                                    <div key={student.id} className="flex justify-between items-center p-4 border rounded-lg">
-                                        <div>
-                                            <h3 className="font-medium">
-                                                {index + 1}. {student.student.firstName} {student.student.lastName}
-                                            </h3>
-                                            <p className="text-sm text-gray-500">{student.student.email}</p>
-                                        </div>
-                                        <div className="text-lg font-semibold">
-                                            Score: {student.score}/{student.totalQuestions}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
 
-                        {!isLoading && sortedStudents.length === 0 && (
-                            <div className="text-center py-6 text-gray-500">
-                                No students found for this test
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-            </div>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Top Performing Students</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {isLoading ? (
+                        <div className="space-y-4">
+                            {[...Array(limit)].map((_, i) => (
+                                <Skeleton key={i} className="h-12 w-full" />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {sortedStudents.map((student, index) => (
+                                <div key={student.id} className="flex justify-between items-center p-4 border rounded-lg">
+                                    <div>
+                                        <h3 className="font-medium">
+                                            {index + 1}. {student.student.firstName} {student.student.lastName}
+                                        </h3>
+                                        <p className="text-sm text-gray-500">{student.student.email}</p>
+                                    </div>
+                                    <div className="text-lg font-semibold">
+                                        Score: {student.score}/{student.totalQuestions}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {!isLoading && sortedStudents.length === 0 && (
+                        <div className="text-center py-6 text-gray-500">
+                            No students found for this test
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
         </div>
     );
 };
