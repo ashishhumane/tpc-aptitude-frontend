@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { useAppDispatch } from "../../../store/store.ts";
 import { getTopNStudents } from "../../../store/Actions/adminAction.ts";
@@ -15,6 +15,11 @@ const QualifyStudents = () => {
     const { topStudents, isLoading, error } = useSelector((state: RootState) => state.admin);
     const [limit, setLimit] = useState<number>(10);
     const [testId, setTestId] = useState<number>(1);
+
+    // Sort students by score in descending order
+    const sortedStudents = useMemo(() => {
+        return [...topStudents].sort((a, b) => b.score - a.score);
+    }, [topStudents]);
 
     const fetchTopStudents = () => {
         dispatch(getTopNStudents({ testId, limit }));
@@ -59,7 +64,7 @@ const QualifyStudents = () => {
 
         // Draw table rows
         let currentY = startY - rowHeight;
-        topStudents.forEach((student, index) => {
+        sortedStudents.forEach((student, index) => {
             const rowData = [
                 `${index + 1}`,
                 `${student.student.firstName} ${student.student.lastName}`,
@@ -102,7 +107,6 @@ const QualifyStudents = () => {
 
     return (
         <div className="p-6 max-w-4xl mx-auto">
-            {/* Rest of the component remains unchanged */}
             <div className="flex gap-4 mb-6 items-end">
                 <div className="space-y-2">
                     <Label htmlFor="testId">Test ID</Label>
@@ -133,7 +137,7 @@ const QualifyStudents = () => {
                 <Button
                     variant="outline"
                     onClick={exportToPDF}
-                    disabled={isLoading || topStudents.length === 0}
+                    disabled={isLoading || sortedStudents.length === 0}
                 >
                     Export to PDF
                 </Button>
@@ -158,10 +162,12 @@ const QualifyStudents = () => {
                             </div>
                         ) : (
                             <div className="space-y-4">
-                                {topStudents.map((student) => (
+                                {sortedStudents.map((student, index) => (
                                     <div key={student.id} className="flex justify-between items-center p-4 border rounded-lg">
                                         <div>
-                                            <h3 className="font-medium">{student.student.firstName} {student.student.lastName}</h3>
+                                            <h3 className="font-medium">
+                                                {index + 1}. {student.student.firstName} {student.student.lastName}
+                                            </h3>
                                             <p className="text-sm text-gray-500">{student.student.email}</p>
                                         </div>
                                         <div className="text-lg font-semibold">
@@ -172,7 +178,7 @@ const QualifyStudents = () => {
                             </div>
                         )}
 
-                        {!isLoading && topStudents.length === 0 && (
+                        {!isLoading && sortedStudents.length === 0 && (
                             <div className="text-center py-6 text-gray-500">
                                 No students found for this test
                             </div>

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { CalculatorIcon } from "lucide-react";
 
 const ScientificCalculator = () => {
   const [input, setInput] = useState("");

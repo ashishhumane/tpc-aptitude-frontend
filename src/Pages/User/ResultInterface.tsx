@@ -192,8 +192,8 @@ const ResultInterface = () => {
                       q: {
                         id: number;
                         question: string;
-                        attemptedAnswer: string | { text: string; imageLink?: string };
-                        correctAnswer: string | { text: string; imageLink?: string };
+                        attemptedAnswer: { text: string; image?: string };
+                        correctAnswer:{ text: string; image?: string };
                         isCorrect: boolean;
                       },
                       index: number
