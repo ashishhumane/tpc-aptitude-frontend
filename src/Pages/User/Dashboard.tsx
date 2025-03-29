@@ -3,6 +3,7 @@
 // import { useEffect, useState } from "react";
 // import DemoCalendar from "@/components/Calender";
 import { CarouselDemo } from "@/components/Carausel";
+import { useEffect } from "react";
 // import { ScrollArea } from "@/components/ui/scroll-area";
 // import Resources from "@/components/Resources";
 // import {
@@ -15,6 +16,37 @@ import { CarouselDemo } from "@/components/Carausel";
 // import { Card } from "@/components/ui/card";
 
 const Dashboard = () => {
+
+  useEffect(() => {
+    // Block right-click context menu
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+
+    // Block keyboard shortcuts
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Block F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
+      if (
+        e.key === "F12" ||
+        (e.ctrlKey && e.shiftKey && e.key === "I") ||
+        (e.ctrlKey && e.shiftKey && e.key === "J") ||
+        (e.ctrlKey && e.key === "U") ||
+        (e.ctrlKey && e.key === "u")
+      ) {
+        e.preventDefault();
+      }
+    };
+
+    // Add event listeners
+    document.addEventListener("contextmenu", handleContextMenu);
+    document.addEventListener("keydown", handleKeyDown);
+
+    // Cleanup function
+    return () => {
+      document.removeEventListener("contextmenu", handleContextMenu);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
   // interface Test {
   //   id: number;
   //   name: string;

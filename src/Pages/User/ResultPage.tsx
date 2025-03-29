@@ -10,6 +10,37 @@ const ResultPage = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    // Block right-click context menu
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+
+    // Block keyboard shortcuts
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Block F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
+      if (
+        e.key === "F12" ||
+        (e.ctrlKey && e.shiftKey && e.key === "I") ||
+        (e.ctrlKey && e.shiftKey && e.key === "J") ||
+        (e.ctrlKey && e.key === "U") ||
+        (e.ctrlKey && e.key === "u")
+      ) {
+        e.preventDefault();
+      }
+    };
+
+    // Add event listeners
+    document.addEventListener("contextmenu", handleContextMenu);
+    document.addEventListener("keydown", handleKeyDown);
+
+    // Cleanup function
+    return () => {
+      document.removeEventListener("contextmenu", handleContextMenu);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   // Get student_id (Assuming it's stored in Redux or localStorage)
   const student_id = Number(
     useSelector((state: RootState) => state.auth.user?.userId)
