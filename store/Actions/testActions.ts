@@ -51,11 +51,36 @@ export const submitTest = createAsyncThunk(
 export const getQuestions = createAsyncThunk(
   "test/getQuestions",
   async (testId: number, { rejectWithValue }) => {
+    // Fisher-Yates shuffle algorithm
+    const shuffleArray = <T>(array: T[]): T[] => {
+      const shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    };
+
     try {
       const response = await axios.get(
         `${BASE_URL}/test/get-questions/${testId}`
       );
-      return response.data;
+      const data = response.data;
+
+      // Shuffle questions and their options
+      if (data.test?.questions) {
+        // Shuffle questions array
+        data.test.questions = shuffleArray(data.test.questions);
+        
+        // Shuffle options within each question
+        data.test.questions = data.test.questions.map(question => ({
+          ...question,
+          options: question.options ? shuffleArray(question.options) : []
+        }));
+      }
+
+      console.log("Shuffled responses are", data.test);
+      return data;
     } catch (error) {
       if (error instanceof AxiosError) {
         return rejectWithValue(error.response?.data || "An error occurred");
