@@ -3,11 +3,11 @@ import axios, { AxiosError } from "axios";
 import { RootState } from "../store";
 import { useSelector } from "react-redux";
 
-const BASE_URL = "http://new-portal-loadbalancer-1041373362.ap-south-1.elb.amazonaws.com/api";
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 
 type SubmitTestPayload = {
-  test_id: number;
+  test_id: number | string;
   answers: Record<number, number>; // { [question_id]: option_id }
 };
 
@@ -25,13 +25,28 @@ export const submitTest = createAsyncThunk(
         throw new Error("Authorization token is missing"); // Catch missing token issue
       }
 
+      // Build an array form of answers in case the server expects an array
+      const answersArray = Object.entries(answers).map(([questionId, optionId]) => ({
+        question_id: Number(questionId) || questionId,
+        option_id: optionId,
+      }));
+
+      const payloadToSend = {
+        test_id,
+        responses: answers,
+        answers_array: answersArray,
+      };
+
+      console.debug("Submitting test payload:", payloadToSend);
+
       const response = await axios.post(
-        `${BASE_URL}/test/submit-test`,
-        { test_id, responses: answers },
+        `${BASE_URL}api/test/result/submit-test`,
+        payloadToSend,
         {
           headers: {
-            Authorization: `${token}`, // FIX: Use Bearer token format
+            Authorization: `Bearer ${token}`,
           },
+          withCredentials: true,
         }
       );
 
@@ -39,18 +54,17 @@ export const submitTest = createAsyncThunk(
     } catch (error) {
       if (error instanceof AxiosError) {
         console.error("Server Error Details:", error.response?.data);
-        return rejectWithValue(
-          error.response?.data?.message || "Submission failed"
-        );
+        // Return full response data when available to aid debugging in caller
+        return rejectWithValue(error.response?.data || "Submission failed");
       }
       return rejectWithValue("An unexpected error occurred");
     }
   }
 );
 
-  export const getQuestions = createAsyncThunk(
+export const getQuestions = createAsyncThunk(
     "test/getQuestions",
-    async (testId: number, { rejectWithValue }) => {
+    async (testId: string, { rejectWithValue }) => {
       // Fisher-Yates shuffle algorithm
       const shuffleArray = <T>(array: T[]): T[] => {
         const shuffled = [...array];
@@ -63,7 +77,7 @@ export const submitTest = createAsyncThunk(
 
       try {
         const response = await axios.get(
-          `${BASE_URL}/test/get-questions/${testId}`
+          `${BASE_URL}api/test/get-questions/${testId}`,{ withCredentials: true }
         );
         const data = JSON.parse(JSON.stringify(response.data)); // Deep clone
   
@@ -97,7 +111,7 @@ export const submitTest = createAsyncThunk(
         return rejectWithValue("An unexpected error occurred");
       }
     }
-  );
+);
 
 export const evaluateQuickTest = createAsyncThunk(
   "test/evaluateQuickTest",
@@ -105,7 +119,7 @@ export const evaluateQuickTest = createAsyncThunk(
     try {
       const response = await axios.post(
         `${BASE_URL}/test/evaluate-quick-test`,
-        { test_id: Number(id) }
+        { test_id: Number(id) },{withCredentials: true}
       );
       return response.data;
     } catch (error) {
@@ -121,7 +135,9 @@ export const getPracticeTests = createAsyncThunk(
   "test/getPracticeTests",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${BASE_URL}/test/get-practice-tests`);
+      const response = await axios.post(`${BASE_URL}api/test/get-practice-tests`,{},{
+        withCredentials: true
+      });
       return response.data;
     } catch (error) {
       if (error instanceof AxiosError) {
@@ -136,7 +152,9 @@ export const getRealTests = createAsyncThunk(
   "test/getRealTests",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${BASE_URL}/test/get-real-tests`);
+      const response = await axios.post(`${BASE_URL}api/test/get-real-tests`,{},{
+        withCredentials: true
+      });
       return response.data;
     } catch (error) {
       if (error instanceof AxiosError) {
@@ -151,7 +169,7 @@ export const getTopStudents = createAsyncThunk(
   "test/getTopStudents",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${BASE_URL}/api/get-top-students`);
+      const response = await axios.get(`${BASE_URL}/api/get-top-students`,{withCredentials: true});
       return response.data;
     } catch (error) {
       if (error instanceof AxiosError) {
@@ -173,19 +191,23 @@ export const fetchTestStatus = createAsyncThunk(
       isSubmitted,
     }: {
       studentId: number;
-      testId: number;
+      testId: string;
       remainingTime?: number;
       isSubmitted: boolean;
     },
     { rejectWithValue }
   ) => {
     try {
-      const response = await axios.post(`${BASE_URL}/test/handle-test`, {
+      const response = await axios.post(`${BASE_URL}api/test/handle-test`, {
         studentId,
         testId,
         remainingTime, // Send current time to backend
         isSubmitted, //default is false
+      },{
+        withCredentials: true
       });
+     
+      
       return {
         remainingTime: response.data.remainingTime,
         isSubmitted: response.data.isSubmitted,

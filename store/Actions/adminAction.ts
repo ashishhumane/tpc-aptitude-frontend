@@ -2,7 +2,9 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios, { AxiosError } from "axios";
 import { RootState } from "../store"; // Adjust the path as necessary
 
-const BASE_URL = "http://new-portal-loadbalancer-1041373362.ap-south-1.elb.amazonaws.com/api";
+// const BASE_URL = "http://new-portal-loadbalancer-1041373362.ap-south-1.elb.amazonaws.com/api";
+const BASE_URL = import.meta.env.VITE_BASE_URL
+console.log(BASE_URL);
 
 export const createTest = createAsyncThunk(
   "admin/createTest",
@@ -12,7 +14,7 @@ export const createTest = createAsyncThunk(
       const token = state.auth.token; // Get token from Redux state
 
       const response = await axios.post(
-        `${BASE_URL}/admin/create-test`,
+        `${BASE_URL}api/test/admin/create-test`,
         testData,
         {
           headers: {
@@ -91,7 +93,7 @@ export const getAllUsers = createAsyncThunk(
       const token = state.auth.token;
 
       const response = await axios.post(
-        `${BASE_URL}/admin/get-all-users`,
+        `${BASE_URL}api/auth/user/getUsers`,
         {},
         {
           headers: {

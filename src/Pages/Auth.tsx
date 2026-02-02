@@ -45,6 +45,8 @@ const Auth = (): React.ReactNode => {
         {
           email: formData.email,
           password: formData.password,
+        },{
+          withCredentials: true
         }
       );
 
@@ -111,7 +113,7 @@ const Auth = (): React.ReactNode => {
         token: response.data.token,
       };
 
-      dispatch(login(userData)); // Store user & token in Redux
+      dispatch(login(userData )); // Store user & token in Redux
       navigate("/dashboard");
       toast.success("Registration Successful", {
         description: response.data.message,

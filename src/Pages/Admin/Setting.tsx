@@ -19,7 +19,7 @@ const Setting = () => {
     setLoading(true)
 
     try {
-      const response = await fetch("http://new-portal-loadbalancer-1041373362.ap-south-1.elb.amazonaws.com/api/auth/update-admin-status", {
+      const response = await fetch(`${import.meta.env.VITE_BASE_URL}api/auth/update-admin-status`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -27,7 +27,7 @@ const Setting = () => {
         body: JSON.stringify({
           email,
           isAdmin: true,
-          securityKey: "tpcisbest",
+          securityKey: "TPC-PCE",
         }),
       })
 

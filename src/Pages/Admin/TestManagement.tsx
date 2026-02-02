@@ -59,12 +59,13 @@ const TestManagement = () => {
     async function getTests() {
       try {
         const response = await axios.get(
-          `${import.meta.env.VITE_BASE_URL}api/admin/get-all-tests`,
+          `${import.meta.env.VITE_BASE_URL}api/test/admin/get-tests`,
           {
             headers: {
               Authorization: token,
             },
-          }
+            withCredentials: true,
+          },
         );
         if (response.status == 200) {
           // Map API data to match Test type
@@ -75,6 +76,7 @@ const TestManagement = () => {
           setTests(transformedTests);
           setFilteredTests(transformedTests);
           toast.success("Tests loaded.");
+          
         } else {
           toast.error("Failed to fetch tests");
         }
@@ -102,7 +104,7 @@ const TestManagement = () => {
     if (deleteId !== null) {
       try {
         const response = await axios.post(
-          `${import.meta.env.VITE_BASE_URL}api/admin/delete-test/`,
+          `${import.meta.env.VITE_BASE_URL}api/test/admin/delete-test/`,
           {
             testId: deleteId,
           },
@@ -110,6 +112,7 @@ const TestManagement = () => {
             headers: {
               Authorization: token,
             },
+            withCredentials: true,
           }
         );
 
@@ -142,7 +145,7 @@ const TestManagement = () => {
       const response = await axios.post(
         `${import.meta.env.VITE_BASE_URL}api/admin/toggle-listed`,
         { testId: id, is_listed: updatedValue },
-        { headers: { Authorization: token } }
+        { headers: { Authorization: token }, withCredentials: true }
       );
 
       if (response.status === 200) {
@@ -158,7 +161,7 @@ const TestManagement = () => {
 
   // Define table columns
   const columns: ColumnDef<Test>[] = [
-    { accessorKey: "id", header: "ID" },
+    { accessorKey: "_id", header: "ID" },
     { accessorKey: "name", header: "Test Name" },
     {
       accessorKey: "isQuickEvaluation",

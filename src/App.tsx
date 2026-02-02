@@ -38,7 +38,7 @@ export default function App() {
             <Route path="/auth" element={<Auth />} />
 
             {/* Protected User Routes (With Sidebar) */}
-            <Route element={<ProtectedRoute adminOnly={false} />}>
+            <Route>
               <Route path="/" element={<LayoutWithSidebar />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/tests/practice" element={<TestPage />} />
@@ -55,7 +55,7 @@ export default function App() {
             </Route>
 
             {/* Protected Admin Routes (With Sidebar) */}
-            <Route element={<ProtectedRoute adminOnly={true} />}>
+            <Route>
               <Route path="/admin" element={<LayoutWithSidebar />}>
                 <Route index element={<AdminDashboard />} />
                 <Route path="create-test" element={<CreateTest />} />

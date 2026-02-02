@@ -59,7 +59,7 @@ const TestInterface = () => {
   } = useSelector(
     (state: RootState) => ({
       questions: state.test.questions,
-      testDetails: state.test.testDetails,
+      testDetails: state.test.testDetails.testDetails,
       loading: state.test.loading,
       error: state.test.error,
       remainingTime: state.test.remainingTime,
@@ -68,7 +68,8 @@ const TestInterface = () => {
     shallowEqual // Add shallow equality check
   );
   const persistedData = localStorage.getItem("persist:root");
-
+  // console.log(testDetails.testDetails);
+  
   const blinkStyle = `
 @keyframes blink {
   50% {
@@ -85,63 +86,72 @@ const TestInterface = () => {
     : null;
 
   const { testId } = useParams();
+  if (!testId) {
+  return (
+    <Alert variant="destructive">
+      <AlertCircle className="h-5 w-5" />
+      <p>Invalid test link. Test ID is missing.</p>
+    </Alert>
+  );
+}
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [markedQuestions, setMarkedQuestions] = useState<Set<number>>(
     new Set()
   );
 
+  const BASE_URL = import.meta.env.VITE_BASE_URL
+
   // Add this useEffect hook to fetch test content
   useEffect(() => {
-    const loadTestContent = async () => {
-      if (testId) {
-        try {
-          // Fetch test questions and details
-          await dispatch(getQuestions(Number(testId))).unwrap();
+  if (!testId || !studentId) return;
 
-          // Fetch test status (time remaining, submission status)
-          await dispatch(
-            fetchTestStatus({
-              studentId: studentId!,
-              testId: Number(testId),
-              isSubmitted: false,
-            })
-          ).unwrap();
-        } catch (error) {
-          console.error("Failed to load test content:", error);
-        }
-      }
-    };
+  const loadTestContent = async () => {
+    try {
+      await dispatch(getQuestions(testId)).unwrap();
 
-    loadTestContent().then((r) => console.log(r));
-  }, [dispatch, testId, studentId]);
+      await dispatch(
+        fetchTestStatus({
+          studentId,
+          testId, // ✅ string
+          isSubmitted: false,
+        })
+      ).unwrap();
+    } catch (error) {
+      console.error("Failed to load test content:", error);
+    }
+  };
+
+  loadTestContent();
+}, [dispatch, testId, studentId]);
+
 
   // Modify the initialization useEffect to handle missing testDetails
-  useEffect(() => {
-    const initializeTest = async () => {
-      if (testId && studentId && testDetails) {
-        // Add testDetails to condition
-        try {
-          const serverState = await dispatch(
-            fetchTestStatus({
-              studentId,
-              testId: Number(testId),
-              isSubmitted: false,
-            })
-          ).unwrap();
+  // useEffect(() => {
+  //   const initializeTest = async () => {
+  //     if (testId && studentId && testDetails) {
+  //       // Add testDetails to condition
+  //       try {
+  //         const serverState = await dispatch(
+  //           fetchTestStatus({
+  //             studentId,
+  //             testId: testId,
+  //             isSubmitted: false,
+  //           })
+  //         ).unwrap();
 
-          const testDuration = testDetails.time_duration * 60;
-          const initialTime = serverState.remainingTime || testDuration;
-          const safeTime = Math.min(initialTime, testDuration);
+  //         const testDuration = testDetails.time_duration * 60;
+  //         const initialTime = serverState.remainingTime || testDuration;
+  //         const safeTime = Math.min(initialTime, testDuration);
 
-          dispatch({ type: "test/setInitialTime", payload: safeTime });
-        } catch (error) {
-          console.error("Initialization failed:", error);
-        }
-      }
-    };
-    initializeTest().then((r) => console.log(r));
-  }, [dispatch, testId, studentId, testDetails]);
+  //         dispatch({ type: "test/setInitialTime", payload: safeTime });
+  //       } catch (error) {
+  //         console.error("Initialization failed:", error);
+  //       }
+  //     }
+  //   };
+  //   initializeTest().then((r) => console.log(r));
+  // }, [dispatch, testId, studentId, testDetails]);
 
   useEffect(() => {
     if (!studentId || !testId || isTestSubmitted) return;
@@ -159,11 +169,11 @@ const TestInterface = () => {
 
         // Correct axios call structure
         await axios.post(
-          "http://new-portal-loadbalancer-1041373362.ap-south-1.elb.amazonaws.com/api/test/handle-test", // Use correct endpoint
+          `${BASE_URL}api/test/handle-test`, // Use correct endpoint
           {
             // Request body
             studentId,
-            testId: Number(testId),
+            testId: testId,
             remainingTime: currentTime,
             isSubmitted: false,
           },
@@ -184,6 +194,7 @@ const TestInterface = () => {
       clearInterval(syncInterval);
     };
   }, [studentId, testId, isTestSubmitted, dispatch]);
+
   useEffect(() => {
     if (remainingTime !== null && remainingTime > 0) {
       const expectedTime = testDetails?.time_duration * 60;
@@ -209,7 +220,7 @@ const TestInterface = () => {
     dispatch(
       fetchTestStatus({
         studentId,
-        testId: Number(testId),
+        testId: testId,
         isSubmitted: true,
       })
     ).unwrap();
@@ -255,7 +266,8 @@ const TestInterface = () => {
         );
 
         const payload = {
-          test_id: Number(testId),
+          // keep original route param string to avoid Number() -> NaN -> null
+          test_id: testId,
           answers: responses,
         };
 
@@ -269,7 +281,7 @@ const TestInterface = () => {
         const testStatusResponse = await dispatch(
           fetchTestStatus({
             studentId,
-            testId: Number(testId),
+            testId: testId,
             isSubmitted: true,
           })
         ).unwrap();
@@ -295,21 +307,23 @@ const TestInterface = () => {
       } catch (err) {
         console.error("Submission failed:", err);
 
-        if (err instanceof Error) {
-          if ((err as any).response) {
-            console.error("Server Response:", {
-              data: (err as any).response.data,
-              status: (err as any).response.status,
-              headers: (err as any).response.headers,
-            });
-            console.log(
-              (err as any).response.data.message || "Submission failed"
-            );
+        // Thunks often rejectWithValue with a string or an object from the server.
+        if (typeof err === "string") {
+          console.error("Server error message:", err);
+        } else if (err && typeof err === "object") {
+          // If Axios response object was returned through rejectWithValue
+          if ((err as any).data || (err as any).response) {
+            console.error("Server Response Object:", (err as any).data || (err as any).response?.data || err);
+          } else if ((err as any).message) {
+            console.error("Error message:", (err as any).message);
           } else {
-            console.error("Error Message:", err.message);
+            console.error("Unknown error object:", err);
           }
+        } else if (err instanceof Error) {
+          // Fallback for actual Error instances
+          console.error("Error Message:", err.message);
         } else {
-          console.error("Unknown error:", err);
+          console.error("Unhandled error type:", err);
         }
       }
     },
