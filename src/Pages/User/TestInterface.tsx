@@ -59,7 +59,7 @@ const TestInterface = () => {
   } = useSelector(
     (state: RootState) => ({
       questions: state.test.questions,
-      testDetails: state.test.testDetails.testDetails,
+      testDetails: state.test.testDetails,
       loading: state.test.loading,
       error: state.test.error,
       remainingTime: state.test.remainingTime,
@@ -68,7 +68,7 @@ const TestInterface = () => {
     shallowEqual // Add shallow equality check
   );
   const persistedData = localStorage.getItem("persist:root");
-  // console.log(testDetails.testDetails);
+  console.log(testDetails);
   
   const blinkStyle = `
 @keyframes blink {

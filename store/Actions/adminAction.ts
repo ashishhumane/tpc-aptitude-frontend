@@ -20,6 +20,7 @@ export const createTest = createAsyncThunk(
           headers: {
             Authorization: `${token}`, // Add Bearer token
           },
+          withCredentials: true
         }
       );
       return response.data;

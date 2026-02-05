@@ -109,7 +109,7 @@ const EvaluationPage = () => {
           {filteredTests?.length > 0 ? (
             filteredTests.map((test) => (
               <Card
-                key={test.id}
+                key={test._id}
                 className="group relative overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 border-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-red-50/50 to-orange-50/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 dark:from-red-900/20 dark:to-orange-900/20" />
@@ -162,7 +162,7 @@ const EvaluationPage = () => {
                       </span>
                     </div>
                     <Button
-                      onClick={() => handleStartTest(test.id)}
+                      onClick={() => handleStartTest(test._id)}
                       className="rounded-lg bg-red-600 hover:bg-red-700 transition-transform hover:-translate-y-1"
                     >
                       Start Now <ArrowRight className="ml-2 h-4 w-4" />
