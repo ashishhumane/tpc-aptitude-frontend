@@ -1,14 +1,16 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API_BASE_URL = "http://new-portal-loadbalancer-1041373362.ap-south-1.elb.amazonaws.com";
+// const API_BASE_URL = "http://new-portal-loadbalancer-1041373362.ap-south-1.elb.amazonaws.com";
+const API_BASE_URL = import.meta.env.VITE_BASE_URL;
 
 // Fetch available test results for a student
 export const getAvailableResults = createAsyncThunk(
   "result/getAvailableResults",
-  async (student_id: number, { rejectWithValue }) => {
+  async (student_id: string, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/result/get-available-results`, { student_id });
+      const response = await axios.post(`${API_BASE_URL}api/test/result/get-available-results`, { student_id },{
+        withCredentials: true});
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data || "Failed to fetch available results");
@@ -21,7 +23,10 @@ export const getTestResult = createAsyncThunk(
   "result/getTestResult",
   async ({ test_id, student_id }: { test_id: number; student_id: number }, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/result/get-test-result`, { test_id, student_id });
+      const response = await axios.post(`${API_BASE_URL}api/test/result/get-test-result`, { test_id, student_id },{
+        withCredentials: true
+      });
+      const data = response.data;
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data || "Failed to fetch test result");

@@ -26,7 +26,8 @@ const PracResultInterface = () => {
   const { result, loading, error } = useSelector((state: any) => state.test);
   const answers = location.state?.answers || {};
   const testDetails = location.state?.testDetails || {};
-
+  console.log("result:", result, "answers:", answers);
+  
   useEffect(() => {
     dispatch(evaluateQuickTest(testId));
   }, [dispatch, testId]);
@@ -51,6 +52,7 @@ const PracResultInterface = () => {
         questionId: question.questionId,
         questionText: question.text,
         selectedOption: question.options.find((opt: any) => opt.id === optionId)?.text || "Unknown",
+        // selectedOption: answers[parseInt(index)],
         isCorrect: correctOption?.id === optionId,
         correctOption: correctOption?.text,
       };
@@ -88,7 +90,7 @@ const PracResultInterface = () => {
           <CardTitle className="text-2xl font-bold">{testDetails.test_name} Results</CardTitle>
           <CardDescription className="flex justify-center lg:space-x-24 lg:mt-10">
             <p>{testDetails.description}</p>
-            <p>Duration: {testDetails.time_duration} mins</p>
+            <p className="font-semibold">Duration: {testDetails.testDetails.time_duration} mins</p>
             <p>Questions: {results.length}</p>
           </CardDescription>
         </CardHeader>

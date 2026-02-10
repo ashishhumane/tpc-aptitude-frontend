@@ -42,9 +42,8 @@ const ResultPage = () => {
   }, []);
 
   // Get student_id (Assuming it's stored in Redux or localStorage)
-  const student_id = Number(
-    useSelector((state: RootState) => state.auth.user?.userId)
-  );
+  const student_id = String(useSelector((state: RootState) => state.auth.user?.userId))
+  
   console.log("student_id", student_id);
 
 

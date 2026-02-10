@@ -118,8 +118,8 @@ export const evaluateQuickTest = createAsyncThunk(
   async (id: any, { rejectWithValue }) => {
     try {
       const response = await axios.post(
-        `${BASE_URL}/test/evaluate-quick-test`,
-        { test_id: Number(id) },{withCredentials: true}
+        `${BASE_URL}api/test/result/evaluate-quick-test`,
+        { test_id: id },{withCredentials: true}
       );
       return response.data;
     } catch (error) {
@@ -220,6 +220,8 @@ export const fetchTestStatus = createAsyncThunk(
     }
   }
 );
+
+
 export function getState(): RootState {
   return useSelector((state: RootState) => state);
 }

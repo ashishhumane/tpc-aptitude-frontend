@@ -69,10 +69,11 @@ export const getUnlistedTests = createAsyncThunk(
     try {
       const state = getState() as RootState;
       const token = state.auth.token;
-      const response = await axios.get(`${BASE_URL}/admin/get-unlisted-test`, {
+      const response = await axios.get(`${BASE_URL}api/test/admin/get-unlistedtests`, {
         headers: {
           Authorization: `${token}`,
         },
+        withCredentials: true
       });
       return response.data;
     } catch (error) {
