@@ -115,10 +115,10 @@ export const getAllUsers = createAsyncThunk(
 
 export const deleteUser = createAsyncThunk(
   "admin/deleteUser",
-  async (userId: number, { rejectWithValue }) => {
+  async (userId: string, { rejectWithValue }) => {
     try {
-      const response = await axios.delete(
-        `${BASE_URL}/admin/delete-user/${userId}`
+      const response = await axios.post(
+        `${BASE_URL}api/auth/user/deleteUser/${userId}`,{userId: userId},{withCredentials:  true}
       );
       return response.data;
     } catch (error) {
@@ -137,12 +137,13 @@ export const publishResult = createAsyncThunk(
       const state = getState() as RootState;
       const token = state.auth.token;
       const response = await axios.post(
-        `${BASE_URL}/admin/publish-result`,
+        `${BASE_URL}api/test/result/publish-result`,
         { test_id: testId },
         {
           headers: {
             Authorization: `${token}`,
           },
+          withCredentials: true
         }
       );
       return response.data;
@@ -166,12 +167,13 @@ export const unpublishResult = createAsyncThunk(
       const state = getState() as RootState;
       const token = state.auth.token;
       const response = await axios.post(
-        `${BASE_URL}/admin/unpublish-result`,
+        `${BASE_URL}api/test/result/unpublish-result`,
         { test_id: testId },
         {
           headers: {
             Authorization: `${token}`,
           },
+          withCredentials: true
         }
       );
       return response.data;

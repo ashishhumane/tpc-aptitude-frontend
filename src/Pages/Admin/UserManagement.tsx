@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../store/store";
-import { getAllUsers,deleteUser } from "../../../store/Actions/adminAction";
+import { getAllUsers, deleteUser } from "../../../store/Actions/adminAction";
 import {
   useReactTable,
   getCoreRowModel,
@@ -22,7 +22,7 @@ import { Trash2 } from "lucide-react";
 
 // Define the correct User type based on API response
 type User = {
-  id: number;
+  _id: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -34,21 +34,24 @@ const UserManagement = () => {
 
   // Get user data from Redux store
   const { users, isLoading, error } = useSelector(
-    (state: RootState) => state.admin
+    (state: RootState) => state.admin,
   );
 
   useEffect(() => {
     dispatch(getAllUsers());
   }, [dispatch]);
 
+  console.log(users);
+
   // Delete User
-  const handleDeleteUser = (id: number) => {
-    dispatch(deleteUser(id));
+  const handleDeleteUser = async (id: string) => {
+    await dispatch(deleteUser(id));
+    dispatch(getAllUsers());
   };
 
   // Define table columns
   const columns: ColumnDef<User>[] = [
-    { accessorKey: "id", header: "ID" },
+    { accessorKey: "_id", header: "ID" },
     {
       accessorKey: "firstName",
       header: "First Name",
@@ -72,7 +75,7 @@ const UserManagement = () => {
         <Button
           variant="destructive"
           size="sm"
-          onClick={() => handleDeleteUser(row.original.id)}
+          onClick={() => handleDeleteUser(row.original._id)}
         >
           <Trash2 size={16} />
         </Button>

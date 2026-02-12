@@ -84,14 +84,14 @@ const ResultManage = () => {
                   {test.resultPublished ? (
                     <Button
                       variant="outline"
-                      onClick={() => handleUnpublish(test.id)}
+                      onClick={() => handleUnpublish(test._id)}
                     >
                       Unpublish
                     </Button>
                   ) : (
                     <Button
                       variant="default"
-                      onClick={() => handlePublish(test.id)}
+                      onClick={() => handlePublish(test._id)}
                     >
                       Publish
                     </Button>

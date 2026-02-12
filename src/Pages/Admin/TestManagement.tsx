@@ -143,7 +143,7 @@ const TestManagement = () => {
 
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_BASE_URL}api/admin/toggle-listed`,
+        `${import.meta.env.VITE_BASE_URL}api/test/admin/update-isListed`,
         { testId: id, is_listed: updatedValue },
         { headers: { Authorization: token }, withCredentials: true }
       );
