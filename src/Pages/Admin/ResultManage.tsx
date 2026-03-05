@@ -69,9 +69,9 @@ const ResultManage = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {tests.map((test: any) => (
-              <TableRow key={test.id}>
-                <TableCell>{test.id}</TableCell>
+            {tests.map((test: any, index: number) => (
+              <TableRow key={test._id}>
+                <TableCell>{index + 1}</TableCell>
                 <TableCell>{test.name}</TableCell>
                 <TableCell>
                   {test.resultPublished ? (
@@ -100,6 +100,7 @@ const ResultManage = () => {
               </TableRow>
             ))}
           </TableBody>
+
         </Table>
       )}
     </div>

@@ -34,7 +34,7 @@ export const submitTest = createAsyncThunk(
       const payloadToSend = {
         test_id,
         responses: answers,
-        answers_array: answersArray,
+        // answers_array: answersArray,
       };
 
       console.debug("Submitting test payload:", payloadToSend);

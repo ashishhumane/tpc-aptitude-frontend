@@ -201,7 +201,7 @@ export const getTopNStudents = createAsyncThunk(
             const token = state.auth.token;
 
             const response = await axios.post(
-                `${BASE_URL}/test/get-top-n-students`,
+                `${BASE_URL}api/leaderboard/get-top-n-students`,
                 { testId, limit },
                 {
                     headers: {

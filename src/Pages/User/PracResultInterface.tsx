@@ -1,9 +1,7 @@
-import { useEffect, useRef } from "react";
-import { useLocation, useParams } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { evaluateQuickTest } from "../../../store/Actions/testActions";
-import { AppDispatch } from "../../../store/store";
+import { useRef } from "react";
+import { useLocation } from "react-router-dom";
 import html2canvas from "html2canvas";
+
 import {
   Card,
   CardHeader,
@@ -12,25 +10,26 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertTitle } from "@/components/ui/alert";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const PracResultInterface = () => {
   const location = useLocation();
-  const { testId } = useParams();
-  const dispatch: AppDispatch = useDispatch();
   const resultRef = useRef<HTMLDivElement>(null);
 
-  const { result, loading, error } = useSelector((state: any) => state.test);
   const answers = location.state?.answers || {};
   const testDetails = location.state?.testDetails || {};
-  console.log("result:", result, "answers:", answers);
-  
-  useEffect(() => {
-    dispatch(evaluateQuickTest(testId));
-  }, [dispatch, testId]);
+  const resultData = location.state?.resultData || {};
+
+  const questions = resultData.questions || [];
+  const score = resultData.score || 0;
 
   const handleDownloadResult = () => {
     if (resultRef.current) {
@@ -44,54 +43,50 @@ const PracResultInterface = () => {
   };
 
   const evaluateResults = () => {
-    if (!result?.questions) return [];
-    return Object.entries(answers).map(([index, optionId]) => {
-      const question = result.questions[parseInt(index)];
-      const correctOption = question.options.find((opt: any) => opt.isCorrect);
-      return {
-        questionId: question.questionId,
+    if (!questions.length) return [];
+
+    const output = [];
+
+    for (const [index, optionId] of Object.entries(answers)) {
+      const question = questions[parseInt(index)];
+      if (!question) continue;
+
+      const correctOption = question.options.find(
+        (opt: any) => opt.isCorrect === true
+      );
+
+      const selected = question.options.find(
+        (opt: any) => opt._id === optionId
+      );
+
+      output.push({
+        questionId: question._id,
         questionText: question.text,
-        selectedOption: question.options.find((opt: any) => opt.id === optionId)?.text || "Unknown",
-        // selectedOption: answers[parseInt(index)],
-        isCorrect: correctOption?.id === optionId,
-        correctOption: correctOption?.text,
-      };
-    });
+        selectedOption: selected?.text || "Not Answered",
+        correctOption: correctOption?.text || "N/A",
+        isCorrect: correctOption?._id === optionId,
+      });
+    }
+
+    return output;
   };
 
   const results = evaluateResults();
-
-  if (loading) return (
-    <div className="flex items-center justify-center h-screen">
-      <Card className="w-[400px]">
-        <CardHeader>
-          <Skeleton className="h-6 w-[200px]" />
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Skeleton className="h-4 w-[300px]" />
-          <Skeleton className="h-4 w-[250px]" />
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  if (error) return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <Alert variant="destructive">
-        <AlertTitle>Error: {error.message}</AlertTitle>
-      </Alert>
-    </div>
-  );
 
   return (
     <div className="w-full p-6" ref={resultRef}>
       <Card className="w-full">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">{testDetails.test_name} Results</CardTitle>
+          <CardTitle className="text-2xl font-bold">
+            {testDetails.test_name} Results
+          </CardTitle>
           <CardDescription className="flex justify-center lg:space-x-24 lg:mt-10">
             <p>{testDetails.description}</p>
-            <p className="font-semibold">Duration: {testDetails.testDetails.time_duration} mins</p>
+            <p className="font-semibold">
+              Duration: {testDetails?.testDetails?.time_duration} mins
+            </p>
             <p>Questions: {results.length}</p>
+            <p>Score: {score}</p>
           </CardDescription>
         </CardHeader>
 
@@ -115,7 +110,9 @@ const PracResultInterface = () => {
                     <TableCell>{res.selectedOption}</TableCell>
                     <TableCell>{res.correctOption}</TableCell>
                     <TableCell>
-                      <Badge variant={res.isCorrect ? "default" : "destructive"}>
+                      <Badge
+                        variant={res.isCorrect ? "default" : "destructive"}
+                      >
                         {res.isCorrect ? "Correct" : "Incorrect"}
                       </Badge>
                     </TableCell>

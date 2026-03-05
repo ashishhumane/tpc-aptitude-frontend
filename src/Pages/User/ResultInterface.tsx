@@ -27,8 +27,8 @@ const ResultInterface = () => {
     if (testId && student_id) {
       dispatch(
         getTestResult({
-          test_id: Number(testId),
-          student_id: Number(student_id),
+          test_id: String(testId),
+          student_id: String(student_id),
         })
       );
     }
@@ -38,13 +38,16 @@ const ResultInterface = () => {
     if (!testResult || !user) return null;
 
     const testData = testResult;
-    const resultData = testResult.results[0];
-    const passingScore = testData.totalQuestions * 0.5; // Adjust as per your criteria
-    console.log(testData)
+    const resultData = testResult.result; // ✅ Result is nested inside testResult
+    
+    if (!resultData?.score === undefined) return null;
+
+    const passingScore = testData.totalQuestions * 0.5;
+    console.log("testData:", testData, "resultData:", resultData)
 
     return {
       student: {
-        name: user.firstName + " " + user.lastName, // Assuming user has firstName and lastName properties
+        name: user.firstName + " " + user.lastName,
         rollNumber: "N/A",
         course: "B-TECH ECS",
         year: "3rd Year",
@@ -55,18 +58,18 @@ const ResultInterface = () => {
         totalMarks: testData.totalQuestions,
         obtainedMarks: resultData.score,
         status: resultData.score >= passingScore ? "Passed" : "Failed",
-        timeTaken: 0, // Update if you have duration data
+        timeTaken: 0,
       },
       questions: testData.questions.map((q: any) => {
-        const attemptedAnswerId = resultData.responses[q.id];
+        const attemptedAnswerId = resultData.responses[q._id]; // ✅ Use q._id as key
         const attemptedOption = q.options.find(
-          (opt: any) => opt.id === attemptedAnswerId
+          (opt: any) => opt._id === attemptedAnswerId
         );
         const correctOption = q.options.find((opt: any) => opt.isCorrect);
 
         return {
-          id: q.id,
-          question: q.text,
+          id: q._id,
+          question: q.text || q.imageLink, // Text can be empty, use imageLink if needed
           attemptedAnswer: {
             text: attemptedOption?.text || "",
             image: attemptedOption?.imageLink || null
@@ -75,7 +78,7 @@ const ResultInterface = () => {
             text: correctOption?.text || "",
             image: correctOption?.imageLink || null
           },
-          isCorrect: attemptedOption ? attemptedOption.isCorrect : false,
+          isCorrect: attemptedOption?.isCorrect || false,
         };
       }),
     };

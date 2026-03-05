@@ -20,38 +20,35 @@ import {
 } from "@/components/ui/table";
 import { Trash2 } from "lucide-react";
 
-// Define the correct User type based on API response
 type User = {
   _id: string;
   firstName: string;
   lastName: string;
   email: string;
-  createdAt: string; // Date of account creation
+  createdAt: string;
 };
 
 const UserManagement = () => {
   const dispatch = useDispatch<AppDispatch>();
 
-  // Get user data from Redux store
-  const { users, isLoading, error } = useSelector(
-    (state: RootState) => state.admin,
+  const { users = [], isLoading, error } = useSelector(
+    (state: RootState) => state.admin
   );
 
   useEffect(() => {
     dispatch(getAllUsers());
   }, [dispatch]);
 
-  console.log(users);
-
-  // Delete User
   const handleDeleteUser = async (id: string) => {
     await dispatch(deleteUser(id));
     dispatch(getAllUsers());
   };
 
-  // Define table columns
   const columns: ColumnDef<User>[] = [
-    { accessorKey: "_id", header: "ID" },
+    {
+      header: "ID",
+      cell: ({ row }) => row.index + 1, // ✅ Serial number
+    },
     {
       accessorKey: "firstName",
       header: "First Name",
@@ -67,7 +64,8 @@ const UserManagement = () => {
     {
       accessorKey: "createdAt",
       header: "Joined On",
-      cell: ({ row }) => new Date(row.original.createdAt).toLocaleDateString(),
+      cell: ({ row }) =>
+        new Date(row.original.createdAt).toLocaleDateString(),
     },
     {
       header: "Action",
@@ -83,9 +81,8 @@ const UserManagement = () => {
     },
   ];
 
-  // Create table instance
   const table = useReactTable({
-    data: users, // Use API-fetched users
+    data: users,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
@@ -95,39 +92,38 @@ const UserManagement = () => {
       <h2 className="text-2xl font-semibold mb-4">User Management</h2>
 
       {isLoading && <p>Loading users...</p>}
+
       {error && (
         <p className="text-red-500">
           Error:{" "}
           {typeof error === "string"
             ? error
-            : error.message || "An unknown error occurred"}
+            : error?.message || "An unknown error occurred"}
         </p>
       )}
 
       {!isLoading && !error && (
         <div className="overflow-x-auto">
           <div className="w-full max-w-6xl mx-auto">
-            <Table className="w-full">
+            <Table>
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
-                      <TableHead
-                        key={header.id}
-                        className="px-4 py-2 text-left"
-                      >
+                      <TableHead key={header.id}>
                         {header.column.columnDef.header as string}
                       </TableHead>
                     ))}
                   </TableRow>
                 ))}
               </TableHeader>
+
               <TableBody>
                 {table.getRowModel().rows.length > 0 ? (
                   table.getRowModel().rows.map((row) => (
                     <TableRow key={row.id}>
                       {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id} className="px-4 py-2">
+                        <TableCell key={cell.id}>
                           {typeof cell.column.columnDef.cell === "function"
                             ? cell.column.columnDef.cell(cell.getContext())
                             : cell.renderValue()}

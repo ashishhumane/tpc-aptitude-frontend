@@ -39,6 +39,7 @@ interface TestState {
   realTests: any[];
   topStudents: any[];
   result: any | null;
+  evaluationData: any | null;
   loading: boolean;
   error: string | null;
   remainingTime: number | null; // Track remaining time for tests
@@ -52,6 +53,7 @@ const initialState: TestState = {
   realTests: [],
   topStudents: [],
   result: null as TestResult | null,
+  evaluationData: null,
   loading: false,
   error: null,
   remainingTime: null, // Track remaining time for tests
@@ -87,7 +89,8 @@ const testSlice = createSlice({
         if (serverTime === 0 && !isSubmitted && state.testDetails) {
           state.remainingTime = state.testDetails.time_duration * 60;
         } else {
-          state.remainingTime = serverTime;
+          // Convert backend minutes to frontend seconds
+          state.remainingTime = serverTime * 60;
         }
         state.isTestSubmitted = isSubmitted;
       })
@@ -103,12 +106,16 @@ const testSlice = createSlice({
       .addCase(getQuestions.fulfilled, (state, action) => {
         state.loading = false;
         state.questions = action.payload.test?.questions || action.payload.questions;
-    state.testDetails = action.payload.test || action.payload;
+        state.testDetails = action.payload.test || action.payload;
       })
       .addCase(getQuestions.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
+      // .addCase(evaluateQuickTest.fulfilled, (state, action) => {
+      //   state.loading = false;
+      //   state.evaluationData = action.payload;   // 👈 NOT result
+      // })
 
       // Submit Test
       .addCase(submitTest.pending, (state) => {
@@ -182,5 +189,5 @@ const testSlice = createSlice({
   },
 });
 
-export const { decrementTime,initializeTime,setInitialTime } = testSlice.actions;
+export const { decrementTime, initializeTime, setInitialTime } = testSlice.actions;
 export default testSlice.reducer;

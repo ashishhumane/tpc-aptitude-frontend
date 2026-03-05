@@ -37,22 +37,18 @@ import {
   SelectContent,
 } from "@/components/ui/select";
 
-// Define test data type
 type Test = {
-  id: number;
+  _id: string;
   name: string;
   isListed: boolean;
   isQuickEvaluation: boolean;
 };
 
-// Sample test data
-const initialTests: Test[] = [];
-
 const TestManagement = () => {
-  const [tests, setTests] = useState<Test[]>(initialTests);
-  const [filteredTests, setFilteredTests] = useState<Test[]>(initialTests);
-  const [filterType, setFilterType] = useState<string>("all"); // Filter state
-  const [deleteId, setDeleteId] = useState<number | null>(null); // Store test ID for deletion
+  const [tests, setTests] = useState<Test[]>([]);
+  const [filteredTests, setFilteredTests] = useState<Test[]>([]);
+  const [filterType, setFilterType] = useState<string>("all");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const token = useSelector((state: any) => state.auth.token);
 
   useEffect(() => {
@@ -61,83 +57,75 @@ const TestManagement = () => {
         const response = await axios.get(
           `${import.meta.env.VITE_BASE_URL}api/test/admin/get-tests`,
           {
-            headers: {
-              Authorization: token,
-            },
-            withCredentials: true,
-          },
-        );
-        if (response.status == 200) {
-          // Map API data to match Test type
-          const transformedTests = response.data.tests.map((test: any) => ({
-            ...test,
-            isQuickEvaluation: test.quickEvaluation, // Correct property mapping
-          }));
-          setTests(transformedTests);
-          setFilteredTests(transformedTests);
-          toast.success("Tests loaded.");
-          
-        } else {
-          toast.error("Failed to fetch tests");
-        }
-      } catch (error: any) {
-        toast.error("Something went wrong");
-        console.log(error.message);
-      }
-    }
-    getTests();
-  }, []);
-
-  // Filter tests based on the selected type
-  useEffect(() => {
-    if (filterType === "all") {
-      setFilteredTests(tests);
-    } else if (filterType === "practice") {
-      setFilteredTests(tests.filter((test) => test.isQuickEvaluation));
-    } else if (filterType === "evaluation") {
-      setFilteredTests(tests.filter((test) => !test.isQuickEvaluation));
-    }
-  }, [filterType, tests]);
-
-  // Delete test function with API call
-  const deleteTest = async () => {
-    if (deleteId !== null) {
-      try {
-        const response = await axios.post(
-          `${import.meta.env.VITE_BASE_URL}api/test/admin/delete-test/`,
-          {
-            testId: deleteId,
-          },
-          {
-            headers: {
-              Authorization: token,
-            },
+            headers: { Authorization: `Bearer ${token}` },
             withCredentials: true,
           }
         );
 
         if (response.status === 200) {
-          setTests((prevTests) =>
-            prevTests.filter((test) => test.id !== deleteId)
-          );
-          toast.success("Test deleted successfully");
+          const transformedTests = response.data.tests.map((test: any) => ({
+            ...test,
+            isQuickEvaluation: test.quickEvaluation,
+          }));
+
+          setTests(transformedTests);
+          setFilteredTests(transformedTests);
+          toast.success("Tests loaded.");
         } else {
-          toast.error("Failed to delete test");
+          toast.error("Failed to fetch tests");
         }
       } catch (error: any) {
         toast.error("Something went wrong");
         console.error(error.message);
-      } finally {
-        setDeleteId(null); // Reset delete ID
       }
+    }
+
+    getTests();
+  }, [token]);
+
+  useEffect(() => {
+    if (filterType === "all") {
+      setFilteredTests(tests);
+    } else if (filterType === "practice") {
+      setFilteredTests(tests.filter((t) => t.isQuickEvaluation));
+    } else {
+      setFilteredTests(tests.filter((t) => !t.isQuickEvaluation));
+    }
+  }, [filterType, tests]);
+
+  const deleteTest = async () => {
+    if (!deleteId) return;
+
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}api/test/admin/delete-test/`,
+        { testId: deleteId },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
+        }
+      );
+
+      if (response.status === 200) {
+        setTests((prev) => prev.filter((t) => t._id !== deleteId));
+        toast.success("Test deleted successfully");
+      } else {
+        toast.error("Failed to delete test");
+      }
+    } catch (error: any) {
+      toast.error("Something went wrong");
+      console.error(error.message);
+    } finally {
+      setDeleteId(null);
     }
   };
 
-  const toggleIsListed = async (id: number, currentValue: boolean) => {
+  const toggleIsListed = async (id: string, currentValue: boolean) => {
     const updatedValue = !currentValue;
-    setTests((prevTests) =>
-      prevTests.map((test) =>
-        test.id === id ? { ...test, isListed: updatedValue } : test
+
+    setTests((prev) =>
+      prev.map((t) =>
+        t._id === id ? { ...t, isListed: updatedValue } : t
       )
     );
 
@@ -145,13 +133,16 @@ const TestManagement = () => {
       const response = await axios.post(
         `${import.meta.env.VITE_BASE_URL}api/test/admin/update-isListed`,
         { testId: id, is_listed: updatedValue },
-        { headers: { Authorization: token }, withCredentials: true }
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
+        }
       );
 
       if (response.status === 200) {
         toast.success("Test listing updated.");
       } else {
-        toast.error("Failed to update test listing.");
+        toast.error("Failed to update listing.");
       }
     } catch (error: any) {
       toast.error("Something went wrong.");
@@ -159,9 +150,11 @@ const TestManagement = () => {
     }
   };
 
-  // Define table columns
   const columns: ColumnDef<Test>[] = [
-    { accessorKey: "_id", header: "ID" },
+    {
+      header: "ID",
+      cell: ({ row }) => row.index + 1, // Serial number instead of Mongo ID
+    },
     { accessorKey: "name", header: "Test Name" },
     {
       accessorKey: "isQuickEvaluation",
@@ -176,7 +169,7 @@ const TestManagement = () => {
         <Checkbox
           checked={row.original.isListed}
           onCheckedChange={() =>
-            toggleIsListed(row.original.id, row.original.isListed)
+            toggleIsListed(row.original._id, row.original.isListed)
           }
         />
       ),
@@ -189,7 +182,7 @@ const TestManagement = () => {
             <Button
               variant="destructive"
               size="sm"
-              onClick={() => setDeleteId(row.original.id)}
+              onClick={() => setDeleteId(row.original._id)}
             >
               <Trash2 size={16} />
             </Button>
@@ -200,7 +193,9 @@ const TestManagement = () => {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={deleteTest}>Delete</AlertDialogAction>
+              <AlertDialogAction onClick={deleteTest}>
+                Delete
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -208,7 +203,6 @@ const TestManagement = () => {
     },
   ];
 
-  // Create table instance
   const table = useReactTable({
     data: filteredTests,
     columns,
@@ -219,7 +213,6 @@ const TestManagement = () => {
     <div className="container mx-auto p-6">
       <h2 className="text-2xl font-semibold mb-4">Test Management</h2>
 
-      {/* Filter Dropdown */}
       <div className="mb-4 flex items-center space-x-4">
         <span className="text-lg font-medium">Filter By:</span>
         <Select value={filterType} onValueChange={setFilterType}>
@@ -236,9 +229,9 @@ const TestManagement = () => {
 
       <Table>
         <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
+          {table.getHeaderGroups().map((hg) => (
+            <TableRow key={hg.id}>
+              {hg.headers.map((header) => (
                 <TableHead key={header.id}>
                   {header.column.columnDef.header as string}
                 </TableHead>
@@ -246,6 +239,7 @@ const TestManagement = () => {
             </TableRow>
           ))}
         </TableHeader>
+
         <TableBody>
           {table.getRowModel().rows.length > 0 ? (
             table.getRowModel().rows.map((row) => (

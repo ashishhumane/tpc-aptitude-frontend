@@ -21,7 +21,7 @@ export const getAvailableResults = createAsyncThunk(
 // Fetch test result for a specific test and student
 export const getTestResult = createAsyncThunk(
   "result/getTestResult",
-  async ({ test_id, student_id }: { test_id: number; student_id: number }, { rejectWithValue }) => {
+  async ({ test_id, student_id }: { test_id: string; student_id: string }, { rejectWithValue }) => {
     try {
       const response = await axios.post(`${API_BASE_URL}api/test/result/get-test-result`, { test_id, student_id },{
         withCredentials: true

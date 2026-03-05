@@ -35,6 +35,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { decrementTime } from "../../../store/Slices/testSlices";
 import axios from "axios";
 import ScientificCalculator from "@/components/Layout/Calculator";
+import test from "node:test";
 
 const TestInterface = () => {
   const [enlargedImage, setEnlargedImage] = useState<{
@@ -69,7 +70,7 @@ const TestInterface = () => {
   );
   const persistedData = localStorage.getItem("persist:root");
   console.log(testDetails);
-  
+
   const blinkStyle = `
 @keyframes blink {
   50% {
@@ -87,13 +88,13 @@ const TestInterface = () => {
 
   const { testId } = useParams();
   if (!testId) {
-  return (
-    <Alert variant="destructive">
-      <AlertCircle className="h-5 w-5" />
-      <p>Invalid test link. Test ID is missing.</p>
-    </Alert>
-  );
-}
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-5 w-5" />
+        <p>Invalid test link. Test ID is missing.</p>
+      </Alert>
+    );
+  }
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [markedQuestions, setMarkedQuestions] = useState<Set<number>>(
@@ -104,26 +105,27 @@ const TestInterface = () => {
 
   // Add this useEffect hook to fetch test content
   useEffect(() => {
-  if (!testId || !studentId) return;
+    if (!testId || !studentId) return;
 
-  const loadTestContent = async () => {
-    try {
-      await dispatch(getQuestions(testId)).unwrap();
+    const loadTestContent = async () => {
+      try {
+        await dispatch(getQuestions(testId)).unwrap();
 
-      await dispatch(
-        fetchTestStatus({
-          studentId,
-          testId, // ✅ string
-          isSubmitted: false,
-        })
-      ).unwrap();
-    } catch (error) {
-      console.error("Failed to load test content:", error);
-    }
-  };
+        await dispatch(
+          fetchTestStatus({
+            studentId,
+            testId, //string
+            isSubmitted: false,
+            remainingTime: testDetails.testDetails?.time_duration // Send total time on initial load
+          })
+        ).unwrap();
+      } catch (error) {
+        console.error("Failed to load test content:", error);
+      }
+    };
 
-  loadTestContent();
-}, [dispatch, testId, studentId]);
+    loadTestContent();
+  }, [dispatch, testId, studentId]);
 
 
   // Modify the initialization useEffect to handle missing testDetails
@@ -239,16 +241,16 @@ const TestInterface = () => {
 
         if (isForced) {
           const autoAnswers = { ...answers };
-        questions.forEach((question, index) => {
-          if (!(index in autoAnswers)) {
-            const randomOptionIndex = Math.floor(
-              Math.random() * question.options.length
-            );
-            autoAnswers[index] = question.options[randomOptionIndex].option_id;
-          }
-        });
-        finalAnswers = autoAnswers;
-        setAnswers(autoAnswers);
+          questions.forEach((question, index) => {
+            if (!(index in autoAnswers)) {
+              const randomOptionIndex = Math.floor(
+                Math.random() * question.options.length
+              );
+              autoAnswers[index] = question.options[randomOptionIndex].option_id;
+            }
+          });
+          finalAnswers = autoAnswers;
+          setAnswers(autoAnswers);
           navigate("/dashboard");
           alert("Test submitted automatically Goodbye 🫡");
         }
@@ -290,17 +292,18 @@ const TestInterface = () => {
 
         // Navigate to results or dashboard
         navigate(
-          testDetails?.quickEvaluation ? `/practice-result/${testId}` : "/dashboard",
+          testDetails.testDetails?.quickEvaluation ? `/practice-result/${testId}` : "/dashboard",
           {
-            state: testDetails?.quickEvaluation
+            state: testDetails.testDetails?.quickEvaluation
               ? {
-                  testId: Number(testId),
-                  answers,
-                  remainingTime: remainingTime ?? 0,
-                  timeTaken,
-                  testDetails,
-                  questions,
-                }
+                testId: Number(testId),
+                answers,
+                remainingTime: remainingTime ?? 0,
+                timeTaken,
+                testDetails,
+                questions,
+                resultData: submitResponse,
+              }
               : undefined,
           }
         );
@@ -785,26 +788,26 @@ const TestInterface = () => {
 
       {/* Question Navigation Grid */}
       <div className="relative">
-      <style>{blinkStyle}</style>
+        <style>{blinkStyle}</style>
         <Popover open={isNavOpen} onOpenChange={setIsNavOpen}>
           <PopoverTrigger asChild>
-          <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          className="w-12 h-12 rounded-full relative transition-all hover:scale-105"
-          onClick={() => setIsNavOpen(!isNavOpen)}
-        >
-          {currentQuestionIndex + 1}
-          {markedQuestions.has(currentQuestionIndex) && (
-            <Flag className="w-4 h-4 text-red-600 fill-red-600 absolute -top-1 -right-1" />
-          )}
-        </Button>
-        {!isNavOpen && (
-          <span className="text-sm text-muted-foreground animate-blink font-medium">
-            Click here to navigate through test
-          </span>
-        )}
-      </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                className="w-12 h-12 rounded-full relative transition-all hover:scale-105"
+                onClick={() => setIsNavOpen(!isNavOpen)}
+              >
+                {currentQuestionIndex + 1}
+                {markedQuestions.has(currentQuestionIndex) && (
+                  <Flag className="w-4 h-4 text-red-600 fill-red-600 absolute -top-1 -right-1" />
+                )}
+              </Button>
+              {!isNavOpen && (
+                <span className="text-sm text-muted-foreground animate-blink font-medium">
+                  Click here to navigate through test
+                </span>
+              )}
+            </div>
 
           </PopoverTrigger>
           <PopoverContent
@@ -819,11 +822,10 @@ const TestInterface = () => {
                     currentQuestionIndex === index ? "default" : "outline"
                   }
                   size="sm"
-                  className={`h-8 w-8 p-0 rounded-full transition-all relative ${
-                    answers[index]
+                  className={`h-8 w-8 p-0 rounded-full transition-all relative ${answers[index]
                       ? "bg-green-400 hover:bg-green-200 dark:bg-green-600 dark:hover:bg-green-800"
                       : ""
-                  }`}
+                    }`}
                   onClick={() => {
                     setCurrentQuestionIndex(index);
                     setIsNavOpen(false); // Close the popover on selection
@@ -1014,13 +1016,13 @@ const TestInterface = () => {
               onClick={
                 testDetails.quickEvaluation
                   ? () => {
-                      handlePracticeSubmit(testDetails.test_id).then((r) =>
-                        console.log(r)
-                      );
-                    }
+                    handlePracticeSubmit(testDetails.test_id).then((r) =>
+                      console.log(r)
+                    );
+                  }
                   : () => {
-                      handleSubmit().then((r) => console.log(r));
-                    }
+                    handleSubmit().then((r) => console.log(r));
+                  }
               }
               className="w-full sm:w-auto bg-red-600 hover:bg-green-700"
             >
