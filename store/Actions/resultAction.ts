@@ -26,7 +26,7 @@ export const getTestResult = createAsyncThunk(
       const response = await axios.post(`${API_BASE_URL}api/test/result/get-test-result`, { test_id, student_id },{
         withCredentials: true
       });
-      const data = response.data;
+      // const data = response.data;
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data || "Failed to fetch test result");

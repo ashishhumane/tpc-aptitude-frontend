@@ -35,7 +35,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { decrementTime } from "../../../store/Slices/testSlices";
 import axios from "axios";
 import ScientificCalculator from "@/components/Layout/Calculator";
-import test from "node:test";
 
 const TestInterface = () => {
   const [enlargedImage, setEnlargedImage] = useState<{
