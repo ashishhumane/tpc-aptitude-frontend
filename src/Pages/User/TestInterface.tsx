@@ -636,11 +636,11 @@ const TestInterface = () => {
   }, [remainingTime, isTestSubmitted, handleSubmit]);
 
   // Redirect if test submitted
-  useEffect(() => {
-    if (isTestSubmitted) {
-      navigate(`/result/${testId}`);
-    }
-  }, [isTestSubmitted, navigate, testId]);
+  // useEffect(() => {
+  //   if (isTestSubmitted) {
+  //     navigate(`/result/${testId}`);
+  //   }
+  // }, [isTestSubmitted, navigate, testId]);
 
   // Helper functions
   const toggleMarkForReview = useCallback(() => {

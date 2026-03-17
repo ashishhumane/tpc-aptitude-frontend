@@ -101,7 +101,9 @@ const Auth = (): React.ReactNode => {
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_BASE_URL}api/auth/verify`,
-        formData
+        formData,{
+          withCredentials: true
+        }
       );
       const userData = {
         user: {
