@@ -108,14 +108,19 @@ const TestInterface = () => {
 
     const loadTestContent = async () => {
       try {
-        await dispatch(getQuestions(testId)).unwrap();
+        const result = await dispatch(getQuestions(testId)).unwrap();
+
+        const timeDuration =
+        result?.testDetails?.time_duration ??
+        result?.time_duration ??
+        null;
 
         await dispatch(
           fetchTestStatus({
             studentId,
             testId, //string
             isSubmitted: false,
-            remainingTime: testDetails.testDetails?.time_duration // Send total time on initial load
+            remainingTime: timeDuration ? timeDuration * 60 : undefined // Send total time on initial load
           })
         ).unwrap();
       } catch (error) {
@@ -196,26 +201,26 @@ const TestInterface = () => {
     };
   }, [studentId, testId, isTestSubmitted, dispatch]);
 
-  useEffect(() => {
-    if (remainingTime !== null && remainingTime > 0) {
-      const expectedTime = testDetails?.time_duration * 60;
-      if (remainingTime >= expectedTime) {
-        console.log("Resetting timer from server value");
-        dispatch({ type: "test/setInitialTime", payload: remainingTime });
-      }
-    }
-  }, [remainingTime, testDetails?.time_duration, dispatch]);
+  // useEffect(() => {
+  //   if (remainingTime !== null && remainingTime > 0) {
+  //     const expectedTime = testDetails?.time_duration * 60;
+  //     if (remainingTime >= expectedTime) {
+  //       console.log("Resetting timer from server value");
+  //       dispatch({ type: "test/setInitialTime", payload: remainingTime });
+  //     }
+  //   }
+  // }, [remainingTime, testDetails?.time_duration, dispatch]);
 
   // Timer management
-  useEffect(() => {
-    if (isTestSubmitted || !remainingTime || remainingTime <= 0) return;
+  // useEffect(() => {
+  //   if (isTestSubmitted || !remainingTime || remainingTime <= 0) return;
 
-    const timerId = setInterval(() => {
-      dispatch(decrementTime());
-    }, 1000);
+  //   const timerId = setInterval(() => {
+  //     dispatch(decrementTime());
+  //   }, 1000);
 
-    return () => clearInterval(timerId);
-  }, [remainingTime, isTestSubmitted, dispatch]);
+  //   return () => clearInterval(timerId);
+  // }, [remainingTime, isTestSubmitted, dispatch]);
 
   const handlePracticeSubmit = async (id: any) => {
     dispatch(
