@@ -120,7 +120,7 @@ const TestInterface = () => {
             studentId,
             testId, //string
             isSubmitted: false,
-            remainingTime: timeDuration ? timeDuration * 60 : undefined // Send total time on initial load
+            remainingTime: timeDuration ? timeDuration : undefined // Send total time on initial load
           })
         ).unwrap();
       } catch (error) {
