@@ -68,7 +68,7 @@ const TestInterface = () => {
     shallowEqual // Add shallow equality check
   );
   const persistedData = localStorage.getItem("persist:root");
-  console.log("ashish:",testDetails);
+  // console.log("ashish:",testDetails);
 
   const blinkStyle = `
 @keyframes blink {
@@ -109,22 +109,21 @@ const TestInterface = () => {
     const loadTestContent = async () => {
       try {
         const result = await dispatch(getQuestions(testId)).unwrap();
-        console.log("result:",result);
-        
-        const timeDuration =
-        result?.testDetails?.time_duration ??
-        result?.time_duration ??
-        null;
+        console.log("ashish:", result?.testDetails); // ← log from result, not Redux state
 
-        console.log("timeduration:",timeDuration);
-        
+        const timeDuration =
+          result?.testDetails?.time_duration ??
+          result?.time_duration ??
+          null;
+
+        console.log("timeduration:", timeDuration);
 
         await dispatch(
           fetchTestStatus({
             studentId,
-            testId, //string
+            testId,
             isSubmitted: false,
-            remainingTime: timeDuration ? timeDuration : undefined // Send total time on initial load
+            remainingTime: timeDuration ? timeDuration * 60 : undefined, // ← multiply by 60 here
           })
         ).unwrap();
       } catch (error) {
@@ -148,7 +147,7 @@ const TestInterface = () => {
   //             testId: testId,
   //             isSubmitted: false,
   //           })
-  
+
   //         ).unwrap();
 
   //         const testDuration = testDetails.time_duration * 60;
@@ -163,6 +162,12 @@ const TestInterface = () => {
   //   };
   //   initializeTest().then((r) => console.log(r));
   // }, [dispatch, testId, studentId, testDetails]);
+
+
+
+/*
+
+
 
   useEffect(() => {
     if (!studentId || !testId || isTestSubmitted) return;
@@ -205,6 +210,37 @@ const TestInterface = () => {
       clearInterval(syncInterval);
     };
   }, [studentId, testId, isTestSubmitted, dispatch]);
+
+
+
+*/
+useEffect(() => {
+  if (!studentId || !testId || isTestSubmitted || remainingTime === null) return; // ← add null check
+
+  const timerId = setInterval(() => {
+    dispatch(decrementTime());
+  }, 1000);
+
+  const syncInterval = setInterval(async () => {
+    try {
+      const currentTime = store.getState().test.remainingTime;
+      const token = store.getState().auth.token;
+      await axios.post(
+        `${BASE_URL}api/test/handle-test`,
+        { studentId, testId, remainingTime: currentTime, isSubmitted: false },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+    } catch (error) {
+      console.error("Sync failed:", error);
+    }
+  }, 30000);
+
+  return () => {
+    clearInterval(timerId);
+    clearInterval(syncInterval);
+  };
+}, [studentId, testId, isTestSubmitted, remainingTime === null, dispatch]); // ← updated deps
+
 
   // useEffect(() => {
   //   if (remainingTime !== null && remainingTime > 0) {
@@ -832,8 +868,8 @@ const TestInterface = () => {
                   }
                   size="sm"
                   className={`h-8 w-8 p-0 rounded-full transition-all relative ${answers[index]
-                      ? "bg-green-400 hover:bg-green-200 dark:bg-green-600 dark:hover:bg-green-800"
-                      : ""
+                    ? "bg-green-400 hover:bg-green-200 dark:bg-green-600 dark:hover:bg-green-800"
+                    : ""
                     }`}
                   onClick={() => {
                     setCurrentQuestionIndex(index);
