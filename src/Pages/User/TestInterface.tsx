@@ -68,7 +68,7 @@ const TestInterface = () => {
     shallowEqual // Add shallow equality check
   );
   const persistedData = localStorage.getItem("persist:root");
-  console.log(testDetails);
+  console.log("ashish:",testDetails);
 
   const blinkStyle = `
 @keyframes blink {
@@ -109,11 +109,15 @@ const TestInterface = () => {
     const loadTestContent = async () => {
       try {
         const result = await dispatch(getQuestions(testId)).unwrap();
-
+        console.log("result:",result);
+        
         const timeDuration =
         result?.testDetails?.time_duration ??
         result?.time_duration ??
         null;
+
+        console.log("timeduration:",timeDuration);
+        
 
         await dispatch(
           fetchTestStatus({
@@ -144,6 +148,7 @@ const TestInterface = () => {
   //             testId: testId,
   //             isSubmitted: false,
   //           })
+  
   //         ).unwrap();
 
   //         const testDuration = testDetails.time_duration * 60;
