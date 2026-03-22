@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import html2canvas from "html2canvas";
 
@@ -29,7 +29,6 @@ const PracResultInterface = () => {
   const resultData = location.state?.resultData || {};
 
   const questions = resultData.questions || [];
-  const score = resultData.score || 0;
 
   const handleDownloadResult = () => {
     if (resultRef.current) {
@@ -42,14 +41,12 @@ const PracResultInterface = () => {
     }
   };
 
+  // ✅ FIXED LOGIC
   const evaluateResults = () => {
     if (!questions.length) return [];
 
-    const output = [];
-
-    for (const [index, optionId] of Object.entries(answers)) {
-      const question = questions[parseInt(index)];
-      if (!question) continue;
+    return questions.map((question: any, index: number) => {
+      const optionId = answers[index]; // may be undefined
 
       const correctOption = question.options.find(
         (opt: any) => opt.isCorrect === true
@@ -59,19 +56,23 @@ const PracResultInterface = () => {
         (opt: any) => opt._id === optionId
       );
 
-      output.push({
+      const isAnswered = optionId !== undefined;
+
+      return {
         questionId: question._id,
         questionText: question.text,
-        selectedOption: selected?.text || "Not Answered",
+        selectedOption: isAnswered ? selected?.text : "Not Answered",
         correctOption: correctOption?.text || "N/A",
-        isCorrect: correctOption?._id === optionId,
-      });
-    }
-
-    return output;
+        isCorrect: isAnswered && correctOption?._id === optionId,
+        isAnswered,
+      };
+    });
   };
 
   const results = evaluateResults();
+
+  // ✅ OPTIONAL: calculate score on frontend (safer)
+  const score = results.filter((r: { isCorrect: any; }) => r.isCorrect).length;
 
   return (
     <div className="w-full p-6" ref={resultRef}>
@@ -80,12 +81,13 @@ const PracResultInterface = () => {
           <CardTitle className="text-2xl font-bold">
             {testDetails.test_name} Results
           </CardTitle>
+
           <CardDescription className="flex justify-center lg:space-x-24 lg:mt-10">
             <p>{testDetails.description}</p>
             <p className="font-semibold">
               Duration: {testDetails?.testDetails?.time_duration} mins
             </p>
-            <p>Questions: {results.length}</p>
+            <p>Questions: {questions.length}</p>
             <p>Score: {score}</p>
           </CardDescription>
         </CardHeader>
@@ -102,18 +104,30 @@ const PracResultInterface = () => {
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
+
               <TableBody>
-                {results.map((res, idx) => (
+                {results.map((res: { questionId: Key | null | undefined; questionText: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; selectedOption: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; correctOption: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; isAnswered: any; isCorrect: any; }, idx: number) => (
                   <TableRow key={res.questionId}>
                     <TableCell>{idx + 1}</TableCell>
                     <TableCell>{res.questionText}</TableCell>
                     <TableCell>{res.selectedOption}</TableCell>
                     <TableCell>{res.correctOption}</TableCell>
+
                     <TableCell>
                       <Badge
-                        variant={res.isCorrect ? "default" : "destructive"}
+                        variant={
+                          !res.isAnswered
+                            ? "secondary"
+                            : res.isCorrect
+                            ? "default"
+                            : "destructive"
+                        }
                       >
-                        {res.isCorrect ? "Correct" : "Incorrect"}
+                        {!res.isAnswered
+                          ? "Not Answered"
+                          : res.isCorrect
+                          ? "Correct"
+                          : "Incorrect"}
                       </Badge>
                     </TableCell>
                   </TableRow>
@@ -134,3 +148,4 @@ const PracResultInterface = () => {
 };
 
 export default PracResultInterface;
+
