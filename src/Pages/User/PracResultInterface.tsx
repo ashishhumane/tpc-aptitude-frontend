@@ -31,8 +31,12 @@ const PracResultInterface = () => {
   const questions = resultData.questions || [];
 
   useEffect(() => {
-    console.log("ANSWER:", answers);
+    console.log("ANSWERS:", answers);
+    console.log("ANSWER KEYS:", Object.keys(answers));
     console.log("QUESTIONS:", questions);
+    if (questions.length > 0) {
+      console.log("FIRST QUESTION _id:", questions[0]?._id);
+    }
   }, [answers, questions]);
 
   const handleDownloadResult = () => {
@@ -50,25 +54,37 @@ const PracResultInterface = () => {
     if (!questions.length) return [];
 
     return questions.map((question: any, index: number) => {
-      // ✅ FIX: handle string keys properly
-      const optionId = answers[index] || answers[index.toString()];
+      // Try all possible key formats: number index, string index, and question._id
+      const optionId =
+        answers[index] ??
+        answers[index.toString()] ??
+        answers[question._id] ??
+        null;
 
       const correctOption = question.options.find(
         (opt: any) => opt.isCorrect === true
       );
 
+      // Normalize both sides to string for safe comparison
       const selected = question.options.find(
-        (opt: any) => opt._id === optionId
+        (opt: any) =>
+          opt._id === optionId ||
+          opt._id?.toString() === optionId?.toString()
       );
 
-      const isAnswered = !!optionId;
+      const isAnswered = optionId !== null && optionId !== undefined;
 
       return {
         questionId: question._id,
         questionText: question.text,
-        selectedOption: isAnswered ? selected?.text : "Not Answered",
+        selectedOption: isAnswered
+          ? selected?.text ?? "Unknown Option"
+          : "Not Answered",
         correctOption: correctOption?.text || "N/A",
-        isCorrect: isAnswered && correctOption?._id === optionId,
+        isCorrect:
+          isAnswered &&
+          !!correctOption &&
+          correctOption._id?.toString() === optionId?.toString(),
         isAnswered,
       };
     });
@@ -76,7 +92,6 @@ const PracResultInterface = () => {
 
   const results = evaluateResults();
 
-  // ✅ reliable score
   const score = results.filter((r: any) => r.isCorrect).length;
 
   return (
@@ -118,7 +133,6 @@ const PracResultInterface = () => {
                     <TableCell>{res.selectedOption}</TableCell>
                     <TableCell>{res.correctOption}</TableCell>
 
-                    {/* ✅ FINAL FIXED STATUS */}
                     <TableCell>
                       <Badge
                         variant={
