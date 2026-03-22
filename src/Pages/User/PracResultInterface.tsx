@@ -20,16 +20,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-// ✅ Proper type
-type ResultType = {
-  questionId: string;
-  questionText: string;
-  selectedOption: string;
-  correctOption: string;
-  isCorrect: boolean;
-  isAnswered: boolean;
-};
-
 const PracResultInterface = () => {
   const location = useLocation();
   const resultRef = useRef<HTMLDivElement>(null);
@@ -40,6 +30,10 @@ const PracResultInterface = () => {
 
   const questions = resultData.questions || [];
 
+  console.log("ANSWER:",answers);
+  console.log("QUESTIONS:", questions);
+  
+  
   const handleDownloadResult = () => {
     if (resultRef.current) {
       html2canvas(resultRef.current).then((canvas) => {
@@ -51,13 +45,12 @@ const PracResultInterface = () => {
     }
   };
 
-  const evaluateResults = (): ResultType[] => {
+  const evaluateResults = () => {
     if (!questions.length) return [];
 
     return questions.map((question: any, index: number) => {
-      // ✅ handle string/number keys safely
-      const optionId =
-        answers[index] ?? answers[index.toString()] ?? null;
+      // ✅ FIX: handle string keys properly
+      const optionId = answers[index] || answers[index.toString()];
 
       const correctOption = question.options.find(
         (opt: any) => opt.isCorrect === true
@@ -67,13 +60,12 @@ const PracResultInterface = () => {
         (opt: any) => opt._id === optionId
       );
 
-      // ✅ TRUE answer detection (final fix)
-      const isAnswered = selected !== undefined;
+      const isAnswered = !!optionId;
 
       return {
         questionId: question._id,
         questionText: question.text,
-        selectedOption: selected?.text || "Not Answered",
+        selectedOption: isAnswered ? selected?.text : "Not Answered",
         correctOption: correctOption?.text || "N/A",
         isCorrect: isAnswered && correctOption?._id === optionId,
         isAnswered,
@@ -83,8 +75,8 @@ const PracResultInterface = () => {
 
   const results = evaluateResults();
 
-  // ✅ Accurate score
-  const score = results.filter((r) => r.isCorrect).length;
+  // ✅ reliable score
+  const score = results.filter((r: any) => r.isCorrect).length;
 
   return (
     <div className="w-full p-6" ref={resultRef}>
@@ -118,13 +110,14 @@ const PracResultInterface = () => {
               </TableHeader>
 
               <TableBody>
-                {results.map((res, idx: number) => (
+                {results.map((res: any, idx: number ) => (
                   <TableRow key={res.questionId}>
                     <TableCell>{idx + 1}</TableCell>
                     <TableCell>{res.questionText}</TableCell>
                     <TableCell>{res.selectedOption}</TableCell>
                     <TableCell>{res.correctOption}</TableCell>
 
+                    {/* ✅ FINAL FIXED STATUS */}
                     <TableCell>
                       <Badge
                         variant={
