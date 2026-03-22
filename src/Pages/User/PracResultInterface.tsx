@@ -1,4 +1,4 @@
-import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useRef } from "react";
+import { useRef } from "react";
 import { useLocation } from "react-router-dom";
 import html2canvas from "html2canvas";
 
@@ -41,12 +41,12 @@ const PracResultInterface = () => {
     }
   };
 
-  // ✅ FIXED LOGIC
   const evaluateResults = () => {
     if (!questions.length) return [];
 
     return questions.map((question: any, index: number) => {
-      const optionId = answers[index]; // may be undefined
+      // ✅ FIX: handle string keys properly
+      const optionId = answers[index] || answers[index.toString()];
 
       const correctOption = question.options.find(
         (opt: any) => opt.isCorrect === true
@@ -56,7 +56,7 @@ const PracResultInterface = () => {
         (opt: any) => opt._id === optionId
       );
 
-      const isAnswered = optionId !== undefined;
+      const isAnswered = !!optionId;
 
       return {
         questionId: question._id,
@@ -71,8 +71,8 @@ const PracResultInterface = () => {
 
   const results = evaluateResults();
 
-  // ✅ OPTIONAL: calculate score on frontend (safer)
-  const score = results.filter((r: { isCorrect: any; }) => r.isCorrect).length;
+  // ✅ reliable score
+  const score = results.filter((r: any) => r.isCorrect).length;
 
   return (
     <div className="w-full p-6" ref={resultRef}>
@@ -106,13 +106,14 @@ const PracResultInterface = () => {
               </TableHeader>
 
               <TableBody>
-                {results.map((res: { questionId: Key | null | undefined; questionText: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; selectedOption: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; correctOption: string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<string | number | bigint | boolean | ReactPortal | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | null | undefined> | null | undefined; isAnswered: any; isCorrect: any; }, idx: number) => (
+                {results.map((res: any, idx: number ) => (
                   <TableRow key={res.questionId}>
                     <TableCell>{idx + 1}</TableCell>
                     <TableCell>{res.questionText}</TableCell>
                     <TableCell>{res.selectedOption}</TableCell>
                     <TableCell>{res.correctOption}</TableCell>
 
+                    {/* ✅ FINAL FIXED STATUS */}
                     <TableCell>
                       <Badge
                         variant={
@@ -148,4 +149,3 @@ const PracResultInterface = () => {
 };
 
 export default PracResultInterface;
-
