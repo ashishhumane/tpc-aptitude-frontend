@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { useLocation } from "react-router-dom";
 import html2canvas from "html2canvas";
 
@@ -24,32 +24,9 @@ const PracResultInterface = () => {
   const location = useLocation();
   const resultRef = useRef<HTMLDivElement>(null);
 
-  const answers = location.state?.answers || {};
+  const answers = location.state?.answers || {};       // { [index]: option_id }
   const testDetails = location.state?.testDetails || {};
-  const resultData = location.state?.resultData || {};
-
-  const questions = resultData.questions || [];
-
-  // "responses" is the DB field: { [questionId]: selectedOptionId }
-  // "answers" is what the quiz component passed via router state
-  // Merge both so either source works
-  const responses: Record<string, string> = {
-    ...(resultData.responses || {}),
-    ...answers,
-  };
-
-  useEffect(() => {
-    console.log("=== DEBUG ===");
-    console.log("location.state:", location.state);
-    console.log("answers:", answers);
-    console.log("resultData:", resultData);
-    console.log("responses (merged):", responses);
-    console.log("questions count:", questions.length);
-    if (questions.length > 0) {
-      console.log("sample question:", questions[0]);
-      console.log("sample options:", questions[0]?.options);
-    }
-  }, []);
+  const questions = location.state?.questions || [];   // full questions array from Redux
 
   const handleDownloadResult = () => {
     if (resultRef.current) {
@@ -66,36 +43,38 @@ const PracResultInterface = () => {
     if (!questions.length) return [];
 
     return questions.map((question: any, index: number) => {
-      const qId = question._id?.toString();
+      // answers are keyed by index, value is option_id (from the quiz component)
+      const selectedOptionId =
+        answers[index] ?? answers[index.toString()] ?? null;
 
-      // Try every possible key format
-      const optionId =
-        responses[qId] ??               // { questionId: optionId }  <- DB "responses" shape
-        responses[index] ??              // { 0: optionId }           <- numeric index
-        responses[index.toString()] ??   // { "0": optionId }         <- string index
-        null;
-
+      // In quiz component options use option_id and option_text (not _id / text)
       const correctOption = question.options?.find(
         (opt: any) => opt.isCorrect === true
       );
 
-      const selected = question.options?.find(
-        (opt: any) => opt._id?.toString() === optionId?.toString()
+      const selectedOption = question.options?.find(
+        (opt: any) =>
+          opt.option_id === selectedOptionId ||
+          opt.option_id?.toString() === selectedOptionId?.toString()
       );
 
-      const isAnswered = optionId !== null && optionId !== undefined;
+      const isAnswered = selectedOptionId !== null && selectedOptionId !== undefined;
+
+      const isCorrect =
+        isAnswered &&
+        !!correctOption &&
+        (correctOption.option_id === selectedOptionId ||
+          correctOption.option_id?.toString() === selectedOptionId?.toString());
 
       return {
-        questionId: qId,
-        questionText: question.text,
+        questionId: question._id ?? index,
+        questionText: question.question_text || question.text || "",
         selectedOption: isAnswered
-          ? selected?.text ?? `Unknown (id: ${optionId})`
+          ? selectedOption?.option_text ?? selectedOption?.text ?? `id: ${selectedOptionId}`
           : "Not Answered",
-        correctOption: correctOption?.text || "N/A",
-        isCorrect:
-          isAnswered &&
-          !!correctOption &&
-          correctOption._id?.toString() === optionId?.toString(),
+        correctOption:
+          correctOption?.option_text ?? correctOption?.text ?? "N/A",
+        isCorrect,
         isAnswered,
       };
     });
@@ -103,9 +82,6 @@ const PracResultInterface = () => {
 
   const results = evaluateResults();
   const score = results.filter((r: any) => r.isCorrect).length;
-
-  // Use DB score as fallback if frontend evaluation gives 0
-  const displayScore = score > 0 ? score : (resultData.score ?? 0);
 
   return (
     <div className="w-full p-6" ref={resultRef}>
@@ -115,28 +91,17 @@ const PracResultInterface = () => {
             {testDetails.test_name || "Test"} Results
           </CardTitle>
 
-          <CardDescription className="flex justify-center lg:space-x-24 lg:mt-10">
+          <CardDescription className="flex justify-center lg:space-x-24 lg:mt-10 flex-wrap gap-2">
             <p>{testDetails.description}</p>
             <p className="font-semibold">
-              Duration: {testDetails?.testDetails?.time_duration} mins
+              Duration: {testDetails?.testDetails?.time_duration ?? testDetails?.time_duration} mins
             </p>
             <p>Questions: {questions.length}</p>
-            <p>Score: {displayScore}</p>
+            <p>Score: {score} / {questions.length}</p>
           </CardDescription>
         </CardHeader>
 
         <CardContent>
-          {/* Temporary debug panel - remove after confirming fix */}
-          {process.env.NODE_ENV === "development" && (
-            <div className="mb-4 p-3 bg-yellow-100 text-black rounded text-xs font-mono">
-              <p><strong>DEBUG</strong></p>
-              <p>answers keys: {JSON.stringify(Object.keys(answers))}</p>
-              <p>responses keys: {JSON.stringify(Object.keys(responses))}</p>
-              <p>questions[0]._id: {questions[0]?._id?.toString()}</p>
-              <p>resultData.score (from DB): {resultData.score}</p>
-            </div>
-          )}
-
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>

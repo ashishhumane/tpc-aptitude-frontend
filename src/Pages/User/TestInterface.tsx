@@ -271,7 +271,7 @@ useEffect(() => {
         isSubmitted: true,
       })
     ).unwrap();
-    navigate(`/practice-result/${id}`, { state: { answers, testDetails } });
+    navigate(`/practice-result/${id}`, { state: { answers, testDetails, questions } });
   };
 
   // Handle test submission
