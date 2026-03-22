@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import html2canvas from "html2canvas";
 
@@ -30,10 +30,11 @@ const PracResultInterface = () => {
 
   const questions = resultData.questions || [];
 
-  console.log("ANSWER:",answers);
-  console.log("QUESTIONS:", questions);
-  
-  
+  useEffect(() => {
+    console.log("ANSWER:", answers);
+    console.log("QUESTIONS:", questions);
+  }, [answers, questions]);
+
   const handleDownloadResult = () => {
     if (resultRef.current) {
       html2canvas(resultRef.current).then((canvas) => {
@@ -110,7 +111,7 @@ const PracResultInterface = () => {
               </TableHeader>
 
               <TableBody>
-                {results.map((res: any, idx: number ) => (
+                {results.map((res: any, idx: number) => (
                   <TableRow key={res.questionId}>
                     <TableCell>{idx + 1}</TableCell>
                     <TableCell>{res.questionText}</TableCell>
@@ -124,15 +125,15 @@ const PracResultInterface = () => {
                           !res.isAnswered
                             ? "secondary"
                             : res.isCorrect
-                            ? "default"
-                            : "destructive"
+                              ? "default"
+                              : "destructive"
                         }
                       >
                         {!res.isAnswered
                           ? "Not Answered"
                           : res.isCorrect
-                          ? "Correct"
-                          : "Incorrect"}
+                            ? "Correct"
+                            : "Incorrect"}
                       </Badge>
                     </TableCell>
                   </TableRow>
