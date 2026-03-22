@@ -30,20 +30,32 @@ const PracResultInterface = () => {
 
   const questions = resultData.questions || [];
 
+  // "responses" is the DB field: { [questionId]: selectedOptionId }
+  // "answers" is what the quiz component passed via router state
+  // Merge both so either source works
+  const responses: Record<string, string> = {
+    ...(resultData.responses || {}),
+    ...answers,
+  };
+
   useEffect(() => {
-    console.log("ANSWERS:", answers);
-    console.log("ANSWER KEYS:", Object.keys(answers));
-    console.log("QUESTIONS:", questions);
+    console.log("=== DEBUG ===");
+    console.log("location.state:", location.state);
+    console.log("answers:", answers);
+    console.log("resultData:", resultData);
+    console.log("responses (merged):", responses);
+    console.log("questions count:", questions.length);
     if (questions.length > 0) {
-      console.log("FIRST QUESTION _id:", questions[0]?._id);
+      console.log("sample question:", questions[0]);
+      console.log("sample options:", questions[0]?.options);
     }
-  }, [answers, questions]);
+  }, []);
 
   const handleDownloadResult = () => {
     if (resultRef.current) {
       html2canvas(resultRef.current).then((canvas) => {
         const link = document.createElement("a");
-        link.download = `${testDetails.test_name}-result.png`;
+        link.download = `${testDetails.test_name || "test"}-result.png`;
         link.href = canvas.toDataURL();
         link.click();
       });
@@ -54,31 +66,30 @@ const PracResultInterface = () => {
     if (!questions.length) return [];
 
     return questions.map((question: any, index: number) => {
-      // Try all possible key formats: number index, string index, and question._id
+      const qId = question._id?.toString();
+
+      // Try every possible key format
       const optionId =
-        answers[index] ??
-        answers[index.toString()] ??
-        answers[question._id] ??
+        responses[qId] ??               // { questionId: optionId }  <- DB "responses" shape
+        responses[index] ??              // { 0: optionId }           <- numeric index
+        responses[index.toString()] ??   // { "0": optionId }         <- string index
         null;
 
-      const correctOption = question.options.find(
+      const correctOption = question.options?.find(
         (opt: any) => opt.isCorrect === true
       );
 
-      // Normalize both sides to string for safe comparison
-      const selected = question.options.find(
-        (opt: any) =>
-          opt._id === optionId ||
-          opt._id?.toString() === optionId?.toString()
+      const selected = question.options?.find(
+        (opt: any) => opt._id?.toString() === optionId?.toString()
       );
 
       const isAnswered = optionId !== null && optionId !== undefined;
 
       return {
-        questionId: question._id,
+        questionId: qId,
         questionText: question.text,
         selectedOption: isAnswered
-          ? selected?.text ?? "Unknown Option"
+          ? selected?.text ?? `Unknown (id: ${optionId})`
           : "Not Answered",
         correctOption: correctOption?.text || "N/A",
         isCorrect:
@@ -91,15 +102,17 @@ const PracResultInterface = () => {
   };
 
   const results = evaluateResults();
-
   const score = results.filter((r: any) => r.isCorrect).length;
+
+  // Use DB score as fallback if frontend evaluation gives 0
+  const displayScore = score > 0 ? score : (resultData.score ?? 0);
 
   return (
     <div className="w-full p-6" ref={resultRef}>
       <Card className="w-full">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">
-            {testDetails.test_name} Results
+            {testDetails.test_name || "Test"} Results
           </CardTitle>
 
           <CardDescription className="flex justify-center lg:space-x-24 lg:mt-10">
@@ -108,11 +121,22 @@ const PracResultInterface = () => {
               Duration: {testDetails?.testDetails?.time_duration} mins
             </p>
             <p>Questions: {questions.length}</p>
-            <p>Score: {score}</p>
+            <p>Score: {displayScore}</p>
           </CardDescription>
         </CardHeader>
 
         <CardContent>
+          {/* Temporary debug panel - remove after confirming fix */}
+          {process.env.NODE_ENV === "development" && (
+            <div className="mb-4 p-3 bg-yellow-100 text-black rounded text-xs font-mono">
+              <p><strong>DEBUG</strong></p>
+              <p>answers keys: {JSON.stringify(Object.keys(answers))}</p>
+              <p>responses keys: {JSON.stringify(Object.keys(responses))}</p>
+              <p>questions[0]._id: {questions[0]?._id?.toString()}</p>
+              <p>resultData.score (from DB): {resultData.score}</p>
+            </div>
+          )}
+
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -132,7 +156,6 @@ const PracResultInterface = () => {
                     <TableCell>{res.questionText}</TableCell>
                     <TableCell>{res.selectedOption}</TableCell>
                     <TableCell>{res.correctOption}</TableCell>
-
                     <TableCell>
                       <Badge
                         variant={
