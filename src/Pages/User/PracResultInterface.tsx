@@ -24,9 +24,31 @@ const PracResultInterface = () => {
   const location = useLocation();
   const resultRef = useRef<HTMLDivElement>(null);
 
-  const answers = location.state?.answers || {};       // { [index]: option_id }
+  const answers = location.state?.answers || {};       // { [index]: optionId }
   const testDetails = location.state?.testDetails || {};
-  const questions = location.state?.questions || [];   // full questions array from Redux
+  const questions = location.state?.questions || [];   // questions from Redux (has question_id, option_id)
+  const resultData = location.state?.resultData || {}; // API response (has questions[].options[]._id)
+
+  // resultData.questions use _id fields (same shape as ResultInterface)
+  // answers use index keys but values are option _ids
+  // We need to build a responses map: { question._id -> selected option._id }
+  // We do this by matching answers[index] against resultData.questions[index]
+  const buildResponses = (): Record<string, string> => {
+    const apiQuestions = resultData.questions || [];
+    const responses: Record<string, string> = {};
+
+    apiQuestions.forEach((q: any, index: number) => {
+      const selectedOptionId =
+        answers[index] ?? answers[index.toString()] ?? null;
+      if (selectedOptionId) {
+        responses[q._id] = selectedOptionId;
+      }
+    });
+
+    return responses;
+  };
+
+  const responses = buildResponses();
 
   const handleDownloadResult = () => {
     if (resultRef.current) {
@@ -39,42 +61,30 @@ const PracResultInterface = () => {
     }
   };
 
+  // Same logic as ResultInterface.tsx
   const evaluateResults = () => {
-    if (!questions.length) return [];
+    const apiQuestions = resultData.questions || [];
+    if (!apiQuestions.length) return [];
 
-    return questions.map((question: any, index: number) => {
-      // answers are keyed by index, value is option_id (from the quiz component)
-      const selectedOptionId =
-        answers[index] ?? answers[index.toString()] ?? null;
+    return apiQuestions.map((q: any, index: number) => {
+      const attemptedAnswerId = responses[q._id]; // { questionId -> optionId }
 
-      // In quiz component options use option_id and option_text (not _id / text)
-      const correctOption = question.options?.find(
-        (opt: any) => opt.isCorrect === true
+      const attemptedOption = q.options?.find(
+        (opt: any) => opt._id === attemptedAnswerId
       );
+      const correctOption = q.options?.find((opt: any) => opt.isCorrect);
 
-      const selectedOption = question.options?.find(
-        (opt: any) =>
-          opt.option_id === selectedOptionId ||
-          opt.option_id?.toString() === selectedOptionId?.toString()
-      );
-
-      const isAnswered = selectedOptionId !== null && selectedOptionId !== undefined;
-
-      const isCorrect =
-        isAnswered &&
-        !!correctOption &&
-        (correctOption.option_id === selectedOptionId ||
-          correctOption.option_id?.toString() === selectedOptionId?.toString());
+      const isAnswered = !!attemptedAnswerId;
 
       return {
-        questionId: question._id ?? index,
-        questionText: question.question_text || question.text || "",
+        index,
+        questionId: q._id,
+        questionText: q.text || "",
         selectedOption: isAnswered
-          ? selectedOption?.option_text ?? selectedOption?.text ?? `id: ${selectedOptionId}`
+          ? attemptedOption?.text ?? "Unknown Option"
           : "Not Answered",
-        correctOption:
-          correctOption?.option_text ?? correctOption?.text ?? "N/A",
-        isCorrect,
+        correctOption: correctOption?.text || "N/A",
+        isCorrect: isAnswered && (attemptedOption?.isCorrect === true),
         isAnswered,
       };
     });
@@ -94,10 +104,14 @@ const PracResultInterface = () => {
           <CardDescription className="flex justify-center lg:space-x-24 lg:mt-10 flex-wrap gap-2">
             <p>{testDetails.description}</p>
             <p className="font-semibold">
-              Duration: {testDetails?.testDetails?.time_duration ?? testDetails?.time_duration} mins
+              Duration:{" "}
+              {testDetails?.testDetails?.time_duration ?? testDetails?.time_duration}{" "}
+              mins
             </p>
-            <p>Questions: {questions.length}</p>
-            <p>Score: {score} / {questions.length}</p>
+            <p>Questions: {results.length}</p>
+            <p>
+              Score: {score} / {results.length}
+            </p>
           </CardDescription>
         </CardHeader>
 
